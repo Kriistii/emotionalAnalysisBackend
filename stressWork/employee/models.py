@@ -36,10 +36,10 @@ class Emotions(models.Model):
 class ChatSession(models.Model):
     employee_id = models.ForeignKey("Employee", on_delete=models.CASCADE)
     date = models.DateTimeField()
-    first_prevailing_emotion = models.ForeignKey("Emotions", on_delete=models.DO_NOTHING)
-    second_prevailing_emotion = models.ForeignKey("Emotions", on_delete=models.DO_NOTHING)
-    full_video_path = models.CharField()
-    full_audio_path = models.CharField()
+    first_prevailing_emotion = models.ForeignKey("Emotions", related_name="first_prevailing_emotion", on_delete=models.DO_NOTHING)
+    second_prevailing_emotion = models.ForeignKey("Emotions", related_name="second_prevailing_emotion", on_delete=models.DO_NOTHING)
+    full_video_path = models.CharField(max_length=50)
+    full_audio_path = models.CharField(max_length=50)
     full_conversation_path = models.TextField()
 
     def __str__(self) -> str:
@@ -48,8 +48,8 @@ class ChatSession(models.Model):
 class ChatSessionMessage(models.Model):
     session_id = models.ForeignKey("ChatSession", on_delete=models.CASCADE)
     date = models.DateTimeField()
-    video_url = models.CharField()
-    audio_url = models.CharField()
+    video_url = models.CharField(max_length=50)
+    audio_url = models.CharField(max_length=50)
     text = models.TextField()
     chatbot_answer = models.TextField()
 
