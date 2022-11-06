@@ -1,8 +1,5 @@
-from fer import Video
-from fer import FER
-import os
-import sys
-import pandas as pd
+import uuid
+
 
 from rest_framework import status
 from rest_framework.views import APIView
@@ -10,10 +7,11 @@ from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
-from django.conf import settings
 
-from .models import Employee, Record
-from .serializers import EmployeeSerializer, RecordSerializer
+from .models import Employee
+from .serializers import EmployeeSerializer
+
+
 
 
 class EmployeeAPIView(APIView):
@@ -49,12 +47,13 @@ class NewRecordAPIView(APIView):
     
     def post(self, request):
         video_file = request.FILES['video-blob']
-        path = default_storage.save('tmp/prova.webm', ContentFile(video_file.read()))
+        path = default_storage.save('tmp/{}.webm'.format(uuid.uuid4), ContentFile(video_file.read()))
     
+        '''
         #TODO handle blob data and pass it to the varius analyzer
         # Build the Face detection detector
-        '''
-        location_videofile = "../video.mp4"
+        
+        location_videofile = "tmp/prova.mp4"
         face_detector = FER(mtcnn=True)
         # Input the video for processing
         input_video = Video(location_videofile)
@@ -62,7 +61,7 @@ class NewRecordAPIView(APIView):
         # The Analyze() function will run analysis on every frame of the input video. 
         # It will create a rectangular box around every image and show the emotion values next to that.
         # Finally, the method will publish a new video that will have a box around the face of the human with live emotion values.
-        processing_data = input_video.analyze(face_detector, display=False, save_frames=False, save_video=False,frequency=3)
+        processing_data = input_video.analyze(face_detector, display=False, save_frames=False, save_video=False, frequency=2)
 
         # We will now convert the analysed information into a dataframe.
         # This will help us import the data as a .CSV file to perform analysis over it later
@@ -84,6 +83,8 @@ class NewRecordAPIView(APIView):
 
         score_comparisons = pd.DataFrame(emotions, columns = ['Human Emotions'])
         score_comparisons['Emotion Value from the Video'] = emotions_values
-        print(score_comparisons['Human Emotions'].max())
+        print(score_comparisons)
         '''
+        
         return Response("Ok")
+        
