@@ -1,4 +1,5 @@
 import uuid
+import os
 
 
 from rest_framework import status
@@ -7,9 +8,11 @@ from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
+from django.conf import settings
 
 from .models import Employee
 from .serializers import EmployeeSerializer
+import moviepy.editor as mp
 
 
 
@@ -47,7 +50,12 @@ class NewRecordAPIView(APIView):
     
     def post(self, request):
         video_file = request.FILES['video-blob']
-        path = default_storage.save('tmp/{}.webm'.format(uuid.uuid4), ContentFile(video_file.read()))
+        name = uuid.uuid4()
+        path = default_storage.save('tmp/videos/{}.webm'.format(name), ContentFile(video_file.read()))
+        video_path = default_storage.path('tmp/videos/{}.webm'.format(name))
+        clip = mp.VideoFileClip(r'{}'.format(video_path))
+        clip.audio.write_audiofile(r'/Users/alessioferrara/git/stressWorkBack/stressWork/tmp/audios/{}.mp3'.format(name))
+
     
         '''
         #TODO handle blob data and pass it to the varius analyzer
