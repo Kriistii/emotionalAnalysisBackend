@@ -1,7 +1,6 @@
 import uuid
 import os
 
-
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -15,6 +14,15 @@ from .serializers import EmployeeSerializer
 import moviepy.editor as mp
 
 
+class EmployeeStatsAPIView(APIView):
+    def get(self, request):
+        numEmployees = Employee.objects.count()
+        stressedEmployees = 0 # Employee.objects.filter(stressed=True).count()
+
+        return Response({
+            "numEmployees": numEmployees,
+            "stressedEmployees": stressedEmployees
+        })
 
 
 class EmployeeAPIView(APIView):
@@ -39,6 +47,7 @@ class EmployeeAPIView(APIView):
 
         return Response(data=serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
 class EmployeeDetailAPIView(APIView):
 
     def get(self, request, employee_id):
@@ -46,17 +55,18 @@ class EmployeeDetailAPIView(APIView):
         serializer = EmployeeSerializer(employee)
         return Response(data=serializer.data, status=status.HTTP_200_OK)
 
+
 class NewRecordAPIView(APIView):
-    
+
     def post(self, request):
         video_file = request.FILES['video-blob']
         name = uuid.uuid4()
         path = default_storage.save('tmp/videos/{}.webm'.format(name), ContentFile(video_file.read()))
         video_path = default_storage.path('tmp/videos/{}.webm'.format(name))
         clip = mp.VideoFileClip(r'{}'.format(video_path))
-        clip.audio.write_audiofile(r'/Users/alessioferrara/git/stressWorkBack/stressWork/tmp/audios/{}.mp3'.format(name))
+        clip.audio.write_audiofile(
+            r'/Users/alessioferrara/git/stressWorkBack/stressWork/tmp/audios/{}.mp3'.format(name))
 
-    
         '''
         #TODO handle blob data and pass it to the varius analyzer
         # Build the Face detection detector
@@ -93,6 +103,5 @@ class NewRecordAPIView(APIView):
         score_comparisons['Emotion Value from the Video'] = emotions_values
         print(score_comparisons)
         '''
-        
+
         return Response("Ok")
-        
