@@ -39,10 +39,10 @@ start_chat_log = "Human: Hello, I am Alessio\nAI: Hello, Alessio I am Pluto, the
 def video(identifier):
     video_path = default_storage.path('tmp/videos/{}.webm'.format(identifier))
 
-def audio(identifier):
+def audio(identifier, video_path):
     clip = mp.VideoFileClip(r'{}'.format(video_path))
-    clip.audio.write_audiofile(r'/Users/alessioferrara/git/stressWorkBack/stressWork/tmp/audios/{}.wav'.format(name),codec='pcm_s16le')
-    audio_path = default_storage.path("tmp/audios/{}.wav".format(name))
+    clip.audio.write_audiofile(r'/Users/alessioferrara/git/stressWorkBack/stressWork/tmp/audios/{}.wav'.format(identifier),codec='pcm_s16le')
+    audio_path = default_storage.path("tmp/audios/{}.wav".format(identifier))
     recognizer = sr.Recognizer()
     with sr.AudioFile(audio_path) as source:
         audio_data = recognizer.record(source)
@@ -180,7 +180,7 @@ class NewRecordAPIView(APIView):
         #TODO At the moment we have it in case we want to do elaboration in real time, otherwise we can remove this function
         video(name)
         #We retrieve audio from the video, we save it and then we do speech to text in order to have the text to provide to the chatbot
-        text = audio(name)
+        text = audio(name, default_storage.path('tmp/videos/{}.webm').format(name))
         #We use the text we retrieved to give to the chatbot and get an answer from him, in order to return it to the user
         bot_answer = chatbot(request, text)
 
