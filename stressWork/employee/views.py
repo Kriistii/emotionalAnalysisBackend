@@ -1,7 +1,6 @@
 import uuid
 import os
 
-
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -129,6 +128,15 @@ class Wav2Vec2ForSpeechClassification(Wav2Vec2PreTrainedModel):
 
         return outputs
 
+class EmployeeStatsAPIView(APIView):
+    def get(self, request):
+        numEmployees = Employee.objects.count()
+        stressedEmployees = 0 # Employee.objects.filter(stressed=True).count()
+
+        return Response({
+            "numEmployees": numEmployees,
+            "stressedEmployees": stressedEmployees
+        })
 
 
 class EmployeeAPIView(APIView):
@@ -153,12 +161,14 @@ class EmployeeAPIView(APIView):
 
         return Response(data=serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
 class EmployeeDetailAPIView(APIView):
 
     def get(self, request, employee_id):
         employee = get_object_or_404(Employee, id=employee_id)
         serializer = EmployeeSerializer(employee)
         return Response(data=serializer.data, status=status.HTTP_200_OK)
+
 
 class NewRecordAPIView(APIView):
     def post(self, request):
