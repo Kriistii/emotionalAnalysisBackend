@@ -10,21 +10,28 @@ from django.core.files.base import ContentFile
 from django.conf import settings
 import speech_recognition as sr
 import openai
+import moviepy.editor as mp
 
+#Audio analysis
+from dataclasses import dataclass
+from typing import Optional, Tuple
+from transformers.file_utils import ModelOutput
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+import torchaudio
 from transformers import AutoConfig, Wav2Vec2Processor
+import numpy as np
+import pandas as pd
+
+from torch.nn import BCEWithLogitsLoss, CrossEntropyLoss, MSELoss
+
 from transformers.models.wav2vec2.modeling_wav2vec2 import (
     Wav2Vec2PreTrainedModel,
     Wav2Vec2Model
 )
-from sklearn.metrics import classification_report, confusion_matrix
-from datasets import load_dataset, load_metric
-from torch import nn
-import moviepy.editor as mp
-import torch
-import torchaudio
-import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sn
+
+import librosa
 
 from .models import Employee
 from .serializers import EmployeeSerializer
@@ -36,51 +43,12 @@ start_sequence = "\nAI:"
 restart_sequence = "\n\nHuman:"
 start_chat_log = "Human: Hello, I am Alessio\nAI: Hello, Alessio I am Pluto, the first bot that will make you talk during work hours!\n\nHuman: What i can do with you?\nAI: You can ask me questions, we can talk about a lot of things. Why don't you tell me how the day went?\n\nHuman: How many times i can talk with you?\nAI: You can talk with me how many times you want, but you will receive a reward only for the first two times.\n\nHuman: What i need to do in order to obtain the reward?\nAI: You need to talk with me for at least 10 minutes, it wont be hard, i hope."
 
-def video(identifier):
-    video_path = default_storage.path('tmp/videos/{}.webm'.format(identifier))
-
-def audio(identifier, video_path):
-    clip = mp.VideoFileClip(r'{}'.format(video_path))
-    clip.audio.write_audiofile(r'/Users/alessioferrara/git/stressWorkBack/stressWork/tmp/audios/{}.wav'.format(identifier),codec='pcm_s16le')
-    audio_path = default_storage.path("tmp/audios/{}.wav".format(identifier))
-    recognizer = sr.Recognizer()
-    with sr.AudioFile(audio_path) as source:
-        audio_data = recognizer.record(source)
-        text = recognizer.recognize_google(audio_data, language="it-IT")
-        return text.lower()
-        
-    
-
-
-
-def ask(question, chat_log=None):
-    prompt_text = f'{chat_log}{restart_sequence}:{question}{start_sequence}:'
-    response = openai.Completion.create(
-        engine="davinci",
-        prompt=prompt_text,
-        temperature=0.8,
-        max_tokens=150,
-        top_p=1,
-        frequency_penalty=0,
-        presence_penalty=0.3,
-        stop=["\n"]
-    )
-    story = response['choices'][0]['text']
-    print(story)
-    return str(story)
-
-def append_interaction_to_chat_log(question, answer, chat_log=None):
-    if chat_log is None: chat_log = start_chat_log 
-    return f'{chat_log}{restart_sequence} {question}{start_sequence}{answer}'
-
-def chatbot(request, question): 
-    chat_log = request.session.get('chat_log', None)
-    if chat_log is None: chat_log = start_chat_log 
-    answer = ask(question, chat_log)
-    request.session['chat_log'] = append_interaction_to_chat_log(question, answer, chat_log)
-    print(request.session.get('chat_log'))
-    #TODO save the question and the answer somewhere
-    return answer
+@dataclass
+class SpeechClassifierOutput(ModelOutput):
+    loss: Optional[torch.FloatTensor] = None
+    logits: torch.FloatTensor = None
+    hidden_states: Optional[Tuple[torch.FloatTensor]] = None
+    attentions: Optional[Tuple[torch.FloatTensor]] = None
 
 
 class Wav2Vec2ClassificationHead(nn.Module):
@@ -128,6 +96,148 @@ class Wav2Vec2ForSpeechClassification(Wav2Vec2PreTrainedModel):
 
         return outputs
 
+    def forward(
+            self,
+            input_values,
+            attention_mask=None,
+            output_attentions=None,
+            output_hidden_states=None,
+            return_dict=None,
+            labels=None,
+    ):
+        return_dict = return_dict if return_dict is not None else self.config.use_return_dict
+        outputs = self.wav2vec2(
+            input_values,
+            attention_mask=attention_mask,
+            output_attentions=output_attentions,
+            output_hidden_states=output_hidden_states,
+            return_dict=return_dict,
+        )
+        hidden_states = outputs[0]
+        hidden_states = self.merged_strategy(hidden_states, mode=self.pooling_mode)
+        logits = self.classifier(hidden_states)
+        print("pluto")
+        loss = None
+        if labels is not None:
+            if self.config.problem_type is None:
+                if self.num_labels == 1:
+                    self.config.problem_type = "regression"
+                elif self.num_labels > 1 and (labels.dtype == torch.long or labels.dtype == torch.int):
+                    self.config.problem_type = "single_label_classification"
+                else:
+                    self.config.problem_type = "multi_label_classification"
+
+            if self.config.problem_type == "regression":
+                loss_fct = MSELoss()
+                loss = loss_fct(logits.view(-1, self.num_labels), labels)
+            elif self.config.problem_type == "single_label_classification":
+                loss_fct = CrossEntropyLoss()
+                loss = loss_fct(logits.view(-1, self.num_labels), labels.view(-1))
+            elif self.config.problem_type == "multi_label_classification":
+                loss_fct = BCEWithLogitsLoss()
+                loss = loss_fct(logits, labels)
+
+        if not return_dict:
+            output = (logits,) + outputs[2:]
+            return ((loss,) + output) if loss is not None else output
+
+        return SpeechClassifierOutput(
+            loss=loss,
+            logits=logits,
+            hidden_states=outputs.hidden_states,
+            attentions=outputs.attentions,
+        )
+
+def video(identifier):
+    video_path = default_storage.path('tmp/videos/{}.webm'.format(identifier))
+
+def analyze_audio(audio_path):
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model_name_or_path = default_storage.path('content/model/pretrained-model')
+    print(model_name_or_path)
+    config = AutoConfig.from_pretrained(model_name_or_path, local_files_only=True)
+    processor = Wav2Vec2Processor.from_pretrained(model_name_or_path, local_files_only=True)
+    sampling_rate = processor.feature_extractor.sampling_rate
+    model = Wav2Vec2ForSpeechClassification.from_pretrained(model_name_or_path, local_files_only=True).to(device)
+
+    def speech_file_to_array_fn(path, sampling_rate):
+        speech_array, _sampling_rate = torchaudio.load(path)
+        resampler = torchaudio.transforms.Resample(_sampling_rate, sampling_rate)
+        speech = resampler(speech_array).squeeze().numpy()
+        CUT = 4 # custom cut at 4 seconds for speeding up the data processing (not necessary)
+        if len(speech) > 16000*CUT:
+            return speech[:int(16000*CUT)]
+        return speech
+
+    def predict(path, sampling_rate):
+        speech = speech_file_to_array_fn(path, sampling_rate)
+        features = processor(speech, sampling_rate=processor.feature_extractor.sampling_rate, return_tensors="pt", padding=True)
+
+        input_values = features.input_values.to(device)
+        attention_mask = features.attention_mask.to(device)
+
+        with torch.no_grad():
+            logits = model(input_values, attention_mask=attention_mask).logits 
+
+        print("ciao")
+        scores = torch.argmax(logits, dim=-1).detach().cpu().numpy()
+        return scores
+    def prediction(path):
+        outputs = predict(path, sampling_rate)
+        r = pd.DataFrame(outputs)
+        print(r)
+
+
+    
+    prediction(audio_path)
+
+
+
+def audio(identifier, video_path):
+    
+    clip = mp.VideoFileClip(r'{}'.format(video_path))
+    clip.audio.write_audiofile(r'/Users/alessioferrara/git/stressWorkBack/stressWork/tmp/audios/{}.wav'.format(identifier),codec='pcm_s16le')
+    audio_path = default_storage.path("tmp/audios/{}.wav".format(identifier))
+    analyze_audio(audio_path)
+
+    recognizer = sr.Recognizer()
+    
+    with sr.AudioFile(audio_path) as source:
+        audio_data = recognizer.record(source)
+        text = recognizer.recognize_google(audio_data, language="it-IT")
+        return text.lower()
+    
+        
+
+def ask(question, chat_log=None):
+    prompt_text = f'{chat_log}{restart_sequence}:{question}{start_sequence}:'
+    response = openai.Completion.create(
+        engine="davinci",
+        prompt=prompt_text,
+        temperature=0.8,
+        max_tokens=150,
+        top_p=1,
+        frequency_penalty=0,
+        presence_penalty=0.3,
+        stop=["\n"]
+    )
+    story = response['choices'][0]['text']
+    print(story)
+    return str(story)
+
+def append_interaction_to_chat_log(question, answer, chat_log=None):
+    if chat_log is None: chat_log = start_chat_log 
+    return f'{chat_log}{restart_sequence} {question}{start_sequence}{answer}'
+
+def chatbot(request, question): 
+    chat_log = request.session.get('chat_log', None)
+    if chat_log is None: chat_log = start_chat_log 
+    answer = ask(question, chat_log)
+    request.session['chat_log'] = append_interaction_to_chat_log(question, answer, chat_log)
+    print(request.session.get('chat_log'))
+    #TODO save the question and the answer somewhere
+    return answer
+
 class EmployeeStatsAPIView(APIView):
     def get(self, request):
         numEmployees = Employee.objects.count()
@@ -172,7 +282,6 @@ class EmployeeDetailAPIView(APIView):
 
 class NewRecordAPIView(APIView):
     def post(self, request):
-        print(request.session.get('chat_log'))
         video_file = request.FILES['video-blob']
         name = uuid.uuid4()
         default_storage.save('tmp/videos/{}.webm'.format(name), ContentFile(video_file.read()))
@@ -182,104 +291,6 @@ class NewRecordAPIView(APIView):
         #We retrieve audio from the video, we save it and then we do speech to text in order to have the text to provide to the chatbot
         text = audio(name, default_storage.path('tmp/videos/{}.webm').format(name))
         #We use the text we retrieved to give to the chatbot and get an answer from him, in order to return it to the user
-        bot_answer = chatbot(request, text)
+        #bot_answer = chatbot(request, text)
 
-        return Response(bot_answer)
-
-        '''
-        model_path = '/Users/alessioferrara/git/stressWorkBack/stressWork/content/model/pretrained-model'
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        print(f"Device: {device}")
-        config = AutoConfig.from_pretrained(model_path, local_files_only=True)
-        processor = Wav2Vec2Processor.from_pretrained(model_path, local_files_only=True)
-        target_sampling_rate = processor.feature_extractor.sampling_rate
-        model = Wav2Vec2ForSpeechClassification.from_pretrained(model_path, local_files_only=True).to(device)
-        test_dataset = load_dataset("csv", data_files={"test": '/Users/alessioferrara/git/stressWorkBack/stressWork/' +"test.csv"}, delimiter="\t")["test"]
-
-        def speech_file_to_array_fn(path):
-            speech_array, sampling_rate = torchaudio.load(path)
-            resampler = torchaudio.transforms.Resample(sampling_rate, target_sampling_rate)
-            speech = resampler(speech_array).squeeze().numpy()
-            CUT = 4 # custom cut at 4 seconds for speeding up the data processing (not necessary)
-            if len(speech) > 16000*CUT:
-                return speech[:int(16000*CUT)]
-            return speech
-
-
-        def predict(batch):
-            features = processor(batch["speech"], sampling_rate=processor.feature_extractor.sampling_rate, return_tensors="pt", padding=True)
-
-            input_values = features.input_values.to(device)
-            attention_mask = features.attention_mask.to(device)
-
-            with torch.no_grad():
-                logits = model(input_values, attention_mask=attention_mask).logits 
-
-            pred_ids = torch.argmax(logits, dim=-1).detach().cpu().numpy()
-            batch["predicted"] = pred_ids
-            return batch
-
-        test_dataset = test_dataset.map(speech_file_to_array_fn)
-        result = test_dataset.map(predict, batched=True, batch_size=8)
-        label_names = [config.id2label[i] for i in range(config.num_labels)]
-        y_true = [config.label2id[name] for name in result["emotion"]]
-        y_pred = result["predicted"]
-        classification_report(y_true, y_pred, target_names=label_names)
-        emotions = label_names
-        cm=confusion_matrix(y_true, y_pred)
-
-        df_cm = pd.DataFrame(cm.astype('float') / cm.sum(axis=1), index = [i for i in emotions],
-                        columns = [i for i in emotions])
-        l = 16
-        fig, ax = plt.subplots(figsize=(l,l/2))
-        sn.heatmap(df_cm, annot=True, cmap="coolwarm")
-        ax.set(xlabel='Recognized emotion', ylabel='Expressed emotion')
-        ax.xaxis.label.set_size(20)
-        ax.yaxis.label.set_size(20)
-
-        # We change the fontsize of minor ticks label 
-        ax.tick_params(axis='both', which='major', labelsize=12)
-        ax.tick_params(axis='both', which='minor', labelsize=12)
-
-        plt.show()
-
-    
-        
-        #TODO handle blob data and pass it to the varius analyzer
-        # Build the Face detection detector
-        
-        location_videofile = "tmp/prova.mp4"
-        face_detector = FER(mtcnn=True)
-        # Input the video for processing
-        input_video = Video(location_videofile)
-
-        # The Analyze() function will run analysis on every frame of the input video. 
-        # It will create a rectangular box around every image and show the emotion values next to that.
-        # Finally, the method will publish a new video that will have a box around the face of the human with live emotion values.
-        processing_data = input_video.analyze(face_detector, display=False, save_frames=False, save_video=False, frequency=2)
-
-        # We will now convert the analysed information into a dataframe.
-        # This will help us import the data as a .CSV file to perform analysis over it later
-        vid_df = input_video.to_pandas(processing_data)
-        vid_df = input_video.get_first_face(vid_df)
-        vid_df = input_video.get_emotions(vid_df)
-
-        # We will now work on the dataframe to extract which emotion was prominent in the video
-        angry = sum(vid_df.angry)
-        disgust = sum(vid_df.disgust)
-        fear = sum(vid_df.fear)
-        happy = sum(vid_df.happy)
-        sad = sum(vid_df.sad)
-        surprise = sum(vid_df.surprise)
-        neutral = sum(vid_df.neutral)
-
-        emotions = ['Angry', 'Disgust', 'Fear', 'Happy', 'Sad', 'Surprise', 'Neutral']
-        emotions_values = [angry, disgust, fear, happy, sad, surprise, neutral]
-
-        score_comparisons = pd.DataFrame(emotions, columns = ['Human Emotions'])
-        score_comparisons['Emotion Value from the Video'] = emotions_values
-        print(score_comparisons)
-        '''
-        
-        
-        
+        return Response("ok")
