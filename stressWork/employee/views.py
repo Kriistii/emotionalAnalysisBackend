@@ -11,6 +11,13 @@ from django.conf import settings
 import speech_recognition as sr
 import openai
 import moviepy.editor as mp
+import nltk
+nltk.download('vader_lexicon')
+nltk.download('omw-1.4')
+
+#Text analysis
+from nltk.sentiment import SentimentIntensityAnalyzer
+import text2emotion as te
 
 #Audio analysis
 from dataclasses import dataclass
@@ -39,9 +46,19 @@ from .serializers import EmployeeSerializer
 openai.api_key = "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"
 completion = openai.Completion()
 
-start_sequence = "\nAI:"
+start_sequence = "\nCloudia:"
 restart_sequence = "\n\nHuman:"
-start_chat_log = "Human: Hello, I am Alessio\nAI: Hello, Alessio I am Pluto, the first bot that will make you talk during work hours!\n\nHuman: What i can do with you?\nAI: You can ask me questions, we can talk about a lot of things. Why don't you tell me how the day went?\n\nHuman: How many times i can talk with you?\nAI: You can talk with me how many times you want, but you will receive a reward only for the first two times.\n\nHuman: What i need to do in order to obtain the reward?\nAI: You need to talk with me for at least 10 minutes, it wont be hard, i hope."
+start_chat_log = "Human: Hello, I am Alessio\nCloudia: Hello, Alessio I am Cloudia, the first bot that will make you talk during work hours!\n\nHuman: What i can do with you?\nCloudia: You can ask me questions, we can talk about a lot of things. Why don't you tell me how the day went?\n\nHuman: How many times i can talk with you?\nCloudia: You can talk with me how many times you want, but you will receive a reward only for the first two times.\n\nHuman: What i need to do in order to obtain the reward?\nCloudia: You need to talk with me for at least 10 minutes, it wont be hard, i hope."
+
+
+def analyzeText(text):
+    sia = SentimentIntensityAnalyzer()
+    print(text)
+    compound = sia.polarity_scores(text)["compound"]
+    print("Positive") if compound > 0 else print("Negative")
+    print(te.get_emotion(text))
+
+    return compound
 
 @dataclass
 class SpeechClassifierOutput(ModelOutput):
@@ -116,7 +133,6 @@ class Wav2Vec2ForSpeechClassification(Wav2Vec2PreTrainedModel):
         hidden_states = outputs[0]
         hidden_states = self.merged_strategy(hidden_states, mode=self.pooling_mode)
         logits = self.classifier(hidden_states)
-        print("pluto")
         loss = None
         if labels is not None:
             if self.config.problem_type is None:
@@ -154,7 +170,6 @@ def video(identifier):
 def analyze_audio(audio_path):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model_name_or_path = default_storage.path('content/model/pretrained-model')
-    print(model_name_or_path)
     config = AutoConfig.from_pretrained(model_name_or_path, local_files_only=True)
     processor = Wav2Vec2Processor.from_pretrained(model_name_or_path, local_files_only=True)
     sampling_rate = processor.feature_extractor.sampling_rate
@@ -179,13 +194,14 @@ def analyze_audio(audio_path):
         with torch.no_grad():
             logits = model(input_values, attention_mask=attention_mask).logits 
 
-        print("ciao")
         scores = torch.argmax(logits, dim=-1).detach().cpu().numpy()
-        return scores
+        outputs = [{"Emotion": config.id2label[i], "Score": f"{round(score * 100, 3):.1f}%"} for i, score in enumerate(scores)]
+        return outputs
     def prediction(path):
         outputs = predict(path, sampling_rate)
+        print(outputs)
         r = pd.DataFrame(outputs)
-        print(r)
+        print(r.to_string())
 
 
     
@@ -196,7 +212,8 @@ def analyze_audio(audio_path):
 def audio(identifier, video_path):
     
     clip = mp.VideoFileClip(r'{}'.format(video_path))
-    clip.audio.write_audiofile(r'/Users/alessioferrara/git/stressWorkBack/stressWork/tmp/audios/{}.wav'.format(identifier),codec='pcm_s16le')
+    audio_folder_path = default_storage.path("tmp/audios/")
+    clip.audio.write_audiofile(f'{audio_folder_path}/{identifier}.wav',codec='pcm_s16le', ffmpeg_params=["-ac", "1", "-ar", "44100"])    
     audio_path = default_storage.path("tmp/audios/{}.wav".format(identifier))
     analyze_audio(audio_path)
 
@@ -204,7 +221,7 @@ def audio(identifier, video_path):
     
     with sr.AudioFile(audio_path) as source:
         audio_data = recognizer.record(source)
-        text = recognizer.recognize_google(audio_data, language="it-IT")
+        text = recognizer.recognize_google(audio_data)
         return text.lower()
     
         
@@ -222,7 +239,6 @@ def ask(question, chat_log=None):
         stop=["\n"]
     )
     story = response['choices'][0]['text']
-    print(story)
     return str(story)
 
 def append_interaction_to_chat_log(question, answer, chat_log=None):
@@ -290,6 +306,9 @@ class NewRecordAPIView(APIView):
         video(name)
         #We retrieve audio from the video, we save it and then we do speech to text in order to have the text to provide to the chatbot
         text = audio(name, default_storage.path('tmp/videos/{}.webm').format(name))
+
+        analyzeText(text)
+
         #We use the text we retrieved to give to the chatbot and get an answer from him, in order to return it to the user
         #bot_answer = chatbot(request, text)
 
