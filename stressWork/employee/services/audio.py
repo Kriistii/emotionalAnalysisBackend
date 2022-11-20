@@ -35,8 +35,6 @@ def save_video(audio_file, name):
     default_storage.save('tmp/audios/{}.wav'.format(name), ContentFile(audio_file.read()))
 
 
-                               
-
 def analyze_audio(audio_path):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model_name_or_path = default_storage.path('content/model/pretrained-model')

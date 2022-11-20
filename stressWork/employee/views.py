@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 
 
-from components import audio, video, text, chatbot
+from services import audio, video, text, chatbot
 
 
 class EmployeeStatsAPIView(APIView):
