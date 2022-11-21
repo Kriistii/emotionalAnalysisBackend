@@ -1,5 +1,6 @@
 from .serializers import EmployeeSerializer
 from .models import Employee
+from .services import audio, chatbot, video
 import uuid
 from rest_framework import status
 from rest_framework.views import APIView
@@ -7,7 +8,7 @@ from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 
 
-from services import audio, video, text, chatbot
+
 
 
 class EmployeeStatsAPIView(APIView):
@@ -80,3 +81,14 @@ class NewRecordAPIView(APIView):
             return Response({"answer_chatbot": answer, "question" : text })
 
         return Response("Error")
+
+class CloseChatAPIView(APIView):
+
+    def get(self, request):
+        chat_log = request.session.get('chat_log', None)
+        if chat_log is not None:
+            del request.session['chat_log']
+        #TODO Implement logic to start a cron for analyzing the data
+        return Response("Chat closed")
+            
+
