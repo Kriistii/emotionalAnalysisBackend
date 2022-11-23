@@ -4,6 +4,7 @@ import moviepy.editor as mp
 from transformers import AutoConfig, Wav2Vec2Processor
 import torchaudio
 import torch.nn as nn
+import torch.nn.functional as F
 import torch
 import pandas as pd
 from transformers.models.wav2vec2.modeling_wav2vec2 import (
@@ -35,46 +36,36 @@ def save_audio(audio_file, name):
     default_storage.save('tmp/audios/{}.wav'.format(name), ContentFile(audio_file.read()))
 
 
-def analyze_audio(audio_path):
+def analyze_audio(identifier):
+    audio_path = default_storage.path('tmp/audios/{}.wav'.format(identifier))
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model_name_or_path = default_storage.path('content/model/pretrained-model')
     config = AutoConfig.from_pretrained(
         model_name_or_path, local_files_only=True)
     processor = Wav2Vec2Processor.from_pretrained(
         model_name_or_path, local_files_only=True)
-    sampling_rate = processor.feature_extractor.sampling_rate
     model = Wav2Vec2ForSpeechClassification.from_pretrained(
         model_name_or_path, local_files_only=True).to(device)
 
     def speech_file_to_array_fn(path, sampling_rate):
         speech_array, _sampling_rate = torchaudio.load(path)
-        resampler = torchaudio.transforms.Resample(
-            _sampling_rate, sampling_rate)
+        resampler = torchaudio.transforms.Resample(_sampling_rate)
         speech = resampler(speech_array).squeeze().numpy()
-        # custom cut at 4 seconds for speeding up the data processing (not necessary)
-        CUT = 4
-        if len(speech) > 16000*CUT:
-            return speech[:int(16000*CUT)]
         return speech
 
     def predict(path, sampling_rate):
         speech = speech_file_to_array_fn(path, sampling_rate)
-        features = processor(
-            speech, sampling_rate=processor.feature_extractor.sampling_rate, return_tensors="pt", padding=True)
-
+        features = processor(speech, sampling_rate=sampling_rate, return_tensors="pt", padding=True)
         input_values = features.input_values.to(device)
         attention_mask = features.attention_mask.to(device)
-
         with torch.no_grad():
             logits = model(input_values, attention_mask=attention_mask).logits
-
-        scores = torch.argmax(logits, dim=-1).detach().cpu().numpy()
-        outputs = [{"Emotion": config.id2label[i],
-                    "Score": f"{round(score * 100, 3):.1f}%"} for i, score in enumerate(scores)]
+        scores = F.softmax(logits, dim=1).detach().cpu().numpy()[0]
+        outputs = [{"Emotion": config.id2label[i], "Score": f"{round(score * 100, 3):.1f}%"} for i, score in enumerate(scores)]
         return outputs
 
     def prediction(path):
-        outputs = predict(path, sampling_rate)
+        outputs = predict(path, 16000)
         print(outputs)
         r = pd.DataFrame(outputs)
         print(r.to_string())

@@ -82,33 +82,37 @@ class EmployeeDetailAPIView(APIView):
 
 
 class NewRecordAPIView(APIView):
-    def post(self, request):
+    def post(self, request, employee_id):
         name = uuid.uuid4()
-
-        del request.session['chat_log']
-
         if request.FILES.get('video-blob', None):
             video_file = request.FILES['video-blob']
             video.save_video(video_file, name)
             video.analyze_video(name)
             audio.video_to_audio(name)
             text = audio.speech_to_text(name)
-            answer = chatbot.compute_answer(request, text)
+            answer = chatbot.compute_answer(request, text, employee_id)
             return Response({"answer_chatbot": answer, "question": text})
 
         if request.FILES.get('audio-blob', None):
-            # TODO implement logic for audio-blob only
             audio_file = request.FILES['audio-blob']
             audio.save_audio(audio_file, name)
+            #audio.analyze_audio(name)
             text = audio.speech_to_text(name)
-            answer = chatbot.compute_answer(request, text)
+            answer = chatbot.compute_answer(request, text, employee_id)
             return Response({"answer_chatbot": answer, "question": text})
 
         if request.POST.get('text', None):
             text = request.POST['text']
             # analyzeText(text)
-            answer = chatbot.compute_answer(request, text)
+            answer = chatbot.compute_answer(request, text, employee_id)
             return Response({"answer_chatbot": answer, "question": text})
+
+        if request.session.get('topic', None):
+            topic = request.session['topic']
+            #TODO Analyz the answer wrt of the topic and save the answer in the database
+            print("Relaved topic question: " + topic)
+            #Deleting the topic after saving it in the database
+            del request.session['topic']
 
         return Response("Error")
 
