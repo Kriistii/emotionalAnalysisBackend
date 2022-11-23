@@ -85,9 +85,12 @@ class NewRecordAPIView(APIView):
     def post(self, request):
         name = uuid.uuid4()
 
+        del request.session['chat_log']
+
         if request.FILES.get('video-blob', None):
             video_file = request.FILES['video-blob']
             video.save_video(video_file, name)
+            video.analyze_video(name)
             audio.video_to_audio(name)
             text = audio.speech_to_text(name)
             answer = chatbot.compute_answer(request, text)

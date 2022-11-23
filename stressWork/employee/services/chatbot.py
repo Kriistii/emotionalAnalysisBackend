@@ -1,6 +1,6 @@
 import openai
 
-openai.api_key = "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"
+openai.api_key = "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"
 completion = openai.Completion()
 
 start_sequence = "\nCloudia:"
@@ -11,9 +11,9 @@ start_chat_log = "Human: Hello, I am Alessio\nCloudia: Hello, Alessio I am Cloud
 def ask(question, chat_log=None):
     prompt_text = f'{chat_log}{restart_sequence}:{question}{start_sequence}:'
     response = openai.Completion.create(
-        engine="davinci",
+        model="text-davinci-002",
         prompt=prompt_text,
-        temperature=0.8,
+        temperature=0.9,
         max_tokens=150,
         top_p=1,
         frequency_penalty=0,

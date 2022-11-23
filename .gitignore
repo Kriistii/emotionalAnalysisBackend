@@ -8,3 +8,4 @@ db.sqlite3
 /stressWork/tmp
 /stressWork/content
 /OpenFace
+/migrations

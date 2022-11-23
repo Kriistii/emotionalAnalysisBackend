@@ -12,9 +12,9 @@ def save_video(video_file, name):
 def analyze_video(identifier):
     video_path = default_storage.path('tmp/videos/{}.webm'.format(identifier))
     openface_path = default_storage.path('OpenFace')
-    r = subprocess.call(f'./{openface_path}/FeatureExtraction.exe -f {video_path} -aus ', shell=True)
-    print(r)
-
+    csv_path = default_storage.path('tmp/csv')
+    print(csv_path)
+    r = subprocess.call(f' /Users/alessioferrara/git/stressWorkBack/OpenFace/build/bin/FeatureExtraction -f {video_path} -aus -out_dir {csv_path} ', shell=True)
     mostCommonUnits = csvProcessing2(identifier) 
     emotionsPointsDataFrame = findEmotionsPerFrame2(mostCommonUnits)
     dominantEmotions = getTwoDominantEmotions(emotionsPointsDataFrame)
@@ -49,13 +49,14 @@ def csvProcessing2(identifier):
         fullFinal = []
         headArray = []
         reader = csv.reader(file)
+        print(reader)
         for i, row in enumerate(reader):
             final = []
             if(i == 0):
                 for  element1 in row:
                     if("_r" in element1):
                         #save units to head array (only the unit number)
-                        headArray.append(element1[3:5])
+                        headArray.append(element1[2:4])
                 fullFinal.append(headArray)
             else:
                 for index, element in enumerate(row):
@@ -63,6 +64,7 @@ def csvProcessing2(identifier):
                     if 5 <= index <= 21:
                         final.append(float(element))
                 fullFinal.append(final)
+        print(headArray)
     #full final has the best predicted fus        
     return fullFinal
 

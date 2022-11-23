@@ -10,6 +10,7 @@ class Company(models.Model):
 
 class Employer(models.Model):
     name = models.CharField(max_length=50)
+    email = models.CharField(max_length=50)
     surname = models.CharField(max_length=50)
     birthday = models.DateField()
     company_id = models.ForeignKey("Company", on_delete=models.CASCADE)
@@ -23,6 +24,7 @@ class Employee(models.Model):
     surname = models.CharField(max_length=50)
     birthday = models.DateField()
     company_id = models.ForeignKey("Company", on_delete=models.CASCADE)
+    stressed = models.BooleanField(default=False)
 
     def __str__(self) -> str:
         return f"{self.name + self.surname}"
@@ -55,4 +57,13 @@ class ChatSessionMessage(models.Model):
 
     def __str__(self) -> str:
         return f"{self.session_id + ' date:' + self.date}"
+
+class StressRecord(models.Model):
+    date = models.DateField(auto_now=True)
+    stressedUsers = models.IntegerField()
+    #prova
+
+    def __str__(self):
+        return f"{self.date + ' stressed:' + self.stressedUsers}"
+
 
