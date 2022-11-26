@@ -1,5 +1,5 @@
 from .serializers import EmployeeSerializer, StressRecordSerializer
-from .models import Employee, StressRecord
+from .models import Employee, StressRecord, Company
 from .services import audio, chatbot, video
 import uuid
 from datetime import datetime, timedelta
@@ -8,6 +8,8 @@ from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
+
+from django.contrib.auth.hashers import make_password
 
 class EmployeeStatsAPIView(APIView):
     def get(self, request):
@@ -116,8 +118,29 @@ class NewRecordAPIView(APIView):
 
         return Response("Error")
 
-class CloseChatAPIView(APIView):
+class CreateEmployeeAPIView(APIView):
+    def post(self, request):
+        if request.POST.get('email', None):
+            emailField = request.POST['email']
+        if request.POST.get('name', None):
+            nameField = request.POST['name']
+        if request.POST.get('surname', None):
+            surnameField = request.POST['surname']
+        if request.POST.get('birthday', None):
+            birthdayField = request.POST['birthday']
+        if request.POST.get('company_id', None):
+            companyField = Company.objects.get(id = request.POST['company_id'])
+        if request.POST.get('password', None):
+            passwordField = make_password(request.POST['password'])
+        stressedField = 0
 
+        employee = Employee.objects.create(email = emailField, password = passwordField, birthday = birthdayField,
+                                            name = nameField, surname = surnameField, company_id = companyField, 
+                                            stressed = stressedField)
+        employee.save()
+        return Response("Ok")
+
+class CloseChatAPIView(APIView):
     def get(self, request):
         chat_log = request.session.get('chat_log', None)
         if chat_log is not None:
