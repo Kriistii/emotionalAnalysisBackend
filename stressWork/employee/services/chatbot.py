@@ -23,8 +23,8 @@ def ask(question, employee_id, request, chat_log=None, ):
         presence_penalty=0.3,
         stop=["\n"]
     )
+    story = response['choices'][0]['text'] 
     
-    story = response['choices'][0]['text']
     if len(story) > 1 and '?' in story:
         return str(story)
     if len(story) <= 1:
@@ -43,19 +43,23 @@ def append_interaction_to_chat_log(question, answer, chat_log=None):
 
 
 def keep_conversation_alive(emp_id, request):
-    employee_topics = EmployeeTopicSerializer(EmployeeTopic.objects.filter(employee_id=emp_id), many=True).data
+    employee_topics = EmployeeTopicSerializer(EmployeeTopic.objects.filter(employee=emp_id), many=True).data
     employee_topics_id_list = []
     for emp_topic in employee_topics:
         employee_topics_id_list.append(emp_topic['topic_id'])
     topics = TopicSerializer(Topic.objects.exclude(id__in=employee_topics_id_list), many=True).data
-    if len(topics):
+    print(topics)
+    if len(topics) > 0:
         selected_topic = topics[random.randint(0, len(topics) - 1)]
-        request.session['topic'] = selected_topic['name']
+        request.session['topic'] = {'id': selected_topic['id'], 'name': selected_topic['name'] }
+        request.session['topicQuestion'] = True
         return selected_topic['start_question']
-    else:
-        
+    elif len(employee_topics_id_list) > 0:
+        subject = employee_topics[random.randint(0, len(employee_topics)-1)]
+        answer = compute_answer(request, f'Ask me a question about {subject}', emp_id)
         #TODO need to ask questions about the topics the user already replied to
-        print("Error")
+        print(answer)
+    
     
 
 

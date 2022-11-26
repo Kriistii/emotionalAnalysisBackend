@@ -1,13 +1,18 @@
 from .serializers import EmployeeSerializer, StressRecordSerializer
-from .models import Employee, StressRecord
+from .models import Employee, StressRecord, EmployeeTopic, Topic
 from .services import audio, chatbot, video
 import uuid
 from datetime import datetime, timedelta
+import spacy
+from nltk.corpus import wordnet as wn
 
 from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
+
+
+nlp = spacy.load("en_core_web_trf")
 
 class EmployeeStatsAPIView(APIView):
     def get(self, request):
@@ -84,6 +89,8 @@ class EmployeeDetailAPIView(APIView):
 class NewRecordAPIView(APIView):
     def post(self, request, employee_id):
         name = uuid.uuid4()
+        text = ''
+        response =  Response("Error")
         if request.FILES.get('video-blob', None):
             video_file = request.FILES['video-blob']
             video.save_video(video_file, name)
@@ -91,7 +98,7 @@ class NewRecordAPIView(APIView):
             audio.video_to_audio(name)
             text = audio.speech_to_text(name)
             answer = chatbot.compute_answer(request, text, employee_id)
-            return Response({"answer_chatbot": answer, "question": text})
+            response = Response({"answer_chatbot": answer, "question": text})
 
         if request.FILES.get('audio-blob', None):
             audio_file = request.FILES['audio-blob']
@@ -99,29 +106,48 @@ class NewRecordAPIView(APIView):
             #audio.analyze_audio(name)
             text = audio.speech_to_text(name)
             answer = chatbot.compute_answer(request, text, employee_id)
-            return Response({"answer_chatbot": answer, "question": text})
+            response = Response({"answer_chatbot": answer, "question": text})
 
         if request.POST.get('text', None):
             text = request.POST['text']
             # analyzeText(text)
             answer = chatbot.compute_answer(request, text, employee_id)
-            return Response({"answer_chatbot": answer, "question": text})
+            response = Response({"answer_chatbot": answer, "question": text})
 
-        if request.session.get('topic', None):
+        
+        print(request.session.get('topicAnswer', None))
+        if request.session.get('topicAnswer', None):
             topic = request.session['topic']
             #TODO Analyz the answer wrt of the topic and save the answer in the database
-            print("Relaved topic question: " + topic)
+            print(topic['id'])
+            EmployeeTopic.objects.create(topic=Topic(pk=topic['id']), employee=Employee(pk=employee_id), answer=text)
             #Deleting the topic after saving it in the database
+            del request.session['topicAnswer']
             del request.session['topic']
+        
 
-        return Response("Error")
+        if request.session.get('topicQuestion', None):
+            request.session['topicAnswer'] = True
+            del request.session['topicQuestion']
+        print(request.session.get('topicAnswer', None))
+        
+        return response
 
 class CloseChatAPIView(APIView):
 
     def get(self, request):
         chat_log = request.session.get('chat_log', None)
+        topicAnswer = request.session.get('topicAnswer', None)
+        topicQuestion = request.session.get('topicQuestion', None)
+        topic = request.session.get('topic', None)
         if chat_log is not None:
             del request.session['chat_log']
+        if topicAnswer is not None:
+            del request.session['topicAnswer']
+        if topicQuestion is not None:
+            del request.session['topicQuestion']
+        if topic is not None:
+            del request.session['topic']
         #TODO Implement logic to start a cron for analyzing the data
         return Response("Chat closed")
             

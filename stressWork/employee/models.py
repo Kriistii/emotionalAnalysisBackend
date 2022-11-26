@@ -33,7 +33,7 @@ class Employee(models.Model):
     stressed = models.BooleanField(default=False)
 
     def __str__(self) -> str:
-        return f"{self.name + self.surname}"
+        return f"{self.name + ' ' + self.surname}"
 
 class Emotion(models.Model):
     class Meta:
@@ -121,10 +121,10 @@ class Topic(models.Model):
 class EmployeeTopic(models.Model):
     class Meta:
         db_table = 'employee_topic'
-    topic_id = models.ForeignKey("Topic", on_delete=models.CASCADE)
-    employee_id = models.ForeignKey("Employee", on_delete=models.CASCADE)
+    topic = models.ForeignKey("Topic", on_delete=models.CASCADE)
+    employee = models.ForeignKey("Employee", on_delete=models.CASCADE)
     answer = models.TextField(max_length=100)
 
     def __str__(self) -> str:
-        return f"{'employe_id: ' + self.employee_id + ' topic_id:' + self.topic_id + ' answer:' + self.answer}"
+        return f"{'employe: {self.employee} topic: {self.topic} answer: {self.answer}' }"
 
