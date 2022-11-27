@@ -1,4 +1,6 @@
 from django.db import models
+from django.contrib.auth.models import AbstractBaseUser
+from .managers import CustomUserManager
 
 class Company(models.Model):
     class Meta:
@@ -24,16 +26,19 @@ class Employer(models.Model):
         return f"{self.name + self.surname}"
 
 
-class Employee(models.Model):
+class Employee(AbstractBaseUser):
     class Meta:
         db_table = 'employees'
+    REQUIRED_FIELDS = ('password', 'name', 'surname')
+    USERNAME_FIELD = ('email')
     name = models.CharField(max_length=50)
     surname = models.CharField(max_length=50)
     birthday = models.DateField()
     company_id = models.ForeignKey("Company", on_delete=models.CASCADE)
     stressed = models.BooleanField(default=False)
     password = models.CharField(max_length=200)
-    email = models.EmailField(max_length=20)
+    email = models.EmailField(max_length=20, unique=True)
+    objects = CustomUserManager()
 
     def __str__(self) -> str:
         return f"{self.name + self.surname}"

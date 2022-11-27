@@ -119,6 +119,7 @@ class NewRecordAPIView(APIView):
         return Response("Error")
 
 class CreateEmployeeAPIView(APIView):
+    #todo request filter
     def post(self, request):
         if request.POST.get('email', None):
             emailField = request.POST['email']
