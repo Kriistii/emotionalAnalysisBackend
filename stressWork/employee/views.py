@@ -3,16 +3,17 @@ from .models import Employee, StressRecord, EmployeeTopic, Topic
 from .services import audio, chatbot, video
 import uuid
 from datetime import datetime, timedelta
-import spacy
-from nltk.corpus import wordnet as wn
+
+
+from semantic_text_similarity.models import WebBertSimilarity
 
 from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+web_model = WebBertSimilarity(device='cpu', batch_size=10) 
 
-nlp = spacy.load("en_core_web_trf")
 
 class EmployeeStatsAPIView(APIView):
     def get(self, request):
@@ -119,12 +120,16 @@ class NewRecordAPIView(APIView):
         if request.session.get('topicAnswer', None):
             topic = request.session['topic']
             #TODO Analyz the answer wrt of the topic and save the answer in the database
-            print(topic['id'])
-            EmployeeTopic.objects.create(topic=Topic(pk=topic['id']), employee=Employee(pk=employee_id), answer=text)
-            #Deleting the topic after saving it in the database
-            del request.session['topicAnswer']
-            del request.session['topic']
-        
+            predict = web_model.predict([(topic['name'], text)])
+            if predict <= 1:
+                response = Response({"answer_chatbot": "Please answer to the question I made to you in a clear way.", "question": text})
+            else:
+                EmployeeTopic.objects.create(topic=Topic(pk=topic['id']), employee=Employee(pk=employee_id), answer=text)
+                answer = chatbot.compute_answer(request, text, employee_id)
+                response = Response({"answer_chatbot": answer, "question": text})
+                del request.session['topicAnswer']
+                del request.session['topic']
+             
 
         if request.session.get('topicQuestion', None):
             request.session['topicAnswer'] = True

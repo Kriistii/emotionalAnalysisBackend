@@ -1,5 +1,5 @@
 from django.urls import path
-
+from fcm_django.api.rest_framework import FCMDeviceViewSet, FCMDeviceAuthorizedViewSet
 from .views import EmployeeAPIView, EmployeeDetailAPIView, NewRecordAPIView, EmployeeStatsAPIView, CloseChatAPIView, StressStats, StressStatsTimespan
 
 employee_api = EmployeeAPIView.as_view()
@@ -13,10 +13,11 @@ trendTime = StressStatsTimespan.as_view()
 
 urlpatterns = [
     path("", employee_api, name="employees"),
+    path('register-notif-token/',FCMDeviceViewSet.as_view({'post': 'create'}), name='create_fcm_device'),
     path("<int:employee_id>", employee_detail_api, name="employee-detail"),
     path("newMessage/<int:employee_id>", new_record, name="new_message"),
     path("closeChat", close_chat, name="close_chat"),
     path("backoffice", stats, name="stats"),
     path("trend", trend, name="trend"),
-    path("trend/<str:timespan>", trendTime, name="trendTime")
+    path("trend/<str:timespan>", trendTime, name="trendTime"),
 ]

@@ -49,7 +49,9 @@ INSTALLED_APPS = [
     "corsheaders",
     "employee",
     "django_apscheduler",
+    "fcm_django"
 ]
+
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -98,6 +100,18 @@ DATABASES = {
         'HOST': '127.0.0.1',
         'PORT': '5432',
     }
+}
+
+FCM_DJANGO_SETTINGS = {
+        # authentication to Firebase
+        "FCM_SERVER_KEY": "AAAAItpytTc:APA91bGsMrq229ZAQzUeonOsyukogKC9Thzr8juPcGqEjSKmtFDN1BFZ1w-XE3j-Xvr16GvcZ55vQTogcYF-Ee7BwVk6coaXwqqhhXemdR5tAp-Xr_P5AF1DdZEZhFEnrkGN_BBpYVvP",
+        # true if you want to have only one active device per registered user at a time
+        # default: False
+        "ONE_DEVICE_PER_USER": False,
+        # devices to which notifications cannot be sent,
+        # are deleted upon receiving error response from FCM
+        # default: False
+        "DELETE_INACTIVE_DEVICES": True,
 }
 
 

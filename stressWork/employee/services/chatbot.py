@@ -48,7 +48,6 @@ def keep_conversation_alive(emp_id, request):
     for emp_topic in employee_topics:
         employee_topics_id_list.append(emp_topic['topic_id'])
     topics = TopicSerializer(Topic.objects.exclude(id__in=employee_topics_id_list), many=True).data
-    print(topics)
     if len(topics) > 0:
         selected_topic = topics[random.randint(0, len(topics) - 1)]
         request.session['topic'] = {'id': selected_topic['id'], 'name': selected_topic['name'] }
@@ -58,7 +57,7 @@ def keep_conversation_alive(emp_id, request):
         subject = employee_topics[random.randint(0, len(employee_topics)-1)]
         answer = compute_answer(request, f'Ask me a question about {subject}', emp_id)
         #TODO need to ask questions about the topics the user already replied to
-        print(answer)
+        return answer
     
     
 
