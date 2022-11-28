@@ -5,20 +5,25 @@ import pandas as pd
 import csv
 import subprocess
 
+
 def save_video(video_file, name):
     default_storage.save(
-                'tmp/videos/{}.webm'.format(name), ContentFile(video_file.read()))
+        'tmp/videos/{}.webm'.format(name), ContentFile(video_file.read()))
+
 
 def analyze_video(identifier):
     video_path = default_storage.path('tmp/videos/{}.webm'.format(identifier))
     openface_path = default_storage.path('OpenFace')
     csv_path = default_storage.path('tmp/csv')
     print(csv_path)
-    r = subprocess.call(f' /Users/alessioferrara/git/stressWorkBack/OpenFace/build/bin/FeatureExtraction -f {video_path} -aus -out_dir {csv_path} ', shell=True)
-    mostCommonUnits = csvProcessing2(identifier) 
+    r = subprocess.call(
+        f' /Users/alessioferrara/git/stressWorkBack/OpenFace/build/bin/FeatureExtraction -f {video_path} -aus -out_dir {csv_path} ',
+        shell=True)
+    mostCommonUnits = csvProcessing2(identifier)
     emotionsPointsDataFrame = findEmotionsPerFrame2(mostCommonUnits)
     dominantEmotions = getTwoDominantEmotions(emotionsPointsDataFrame)
     print(dominantEmotions)
+
 
 def csvProcessing(identifier):
     with open(default_storage.path('tmp/csv/{}.csv'.format(identifier))) as file:
@@ -27,22 +32,23 @@ def csvProcessing(identifier):
         reader = csv.reader(file)
         for i, row in enumerate(reader):
             final = []
-            if(i == 0):
-                for  element1 in row:
-                    if("AU" in element1):
-                        #save units to head array (only the unit number)
+            if (i == 0):
+                for element1 in row:
+                    if ("AU" in element1):
+                        # save units to head array (only the unit number)
                         headArray.append(element1[3:5])
                     else:
-                        #to preserve the index
+                        # to preserve the index
                         headArray.append(element1)
             else:
                 for index, element in enumerate(row):
-                    #get all fu values, only the ones with probability > 0.7
-                    if ((float(element) > 0.7) and (index not in [0,1,2,3,4])):
+                    # get all fu values, only the ones with probability > 0.7
+                    if ((float(element) > 0.7) and (index not in [0, 1, 2, 3, 4])):
                         final.append(headArray[index])
                 fullFinal.append(final)
-    #full final has the best predicted fus            
+    # full final has the best predicted fus
     return fullFinal
+
 
 def csvProcessing2(identifier):
     with open(default_storage.path('tmp/csv/{}.csv'.format(identifier))) as file:
@@ -52,34 +58,35 @@ def csvProcessing2(identifier):
         print(reader)
         for i, row in enumerate(reader):
             final = []
-            if(i == 0):
-                for  element1 in row:
-                    if("_r" in element1):
-                        #save units to head array (only the unit number)
+            if (i == 0):
+                for element1 in row:
+                    if ("_r" in element1):
+                        # save units to head array (only the unit number)
                         headArray.append(element1[2:4])
                 fullFinal.append(headArray)
             else:
                 for index, element in enumerate(row):
-                    #get all fu values, only the ones with probability > 0.7
+                    # get all fu values, only the ones with probability > 0.7
                     if 5 <= index <= 21:
                         final.append(float(element))
                 fullFinal.append(final)
         print(headArray)
-    #full final has the best predicted fus        
+    # full final has the best predicted fus
     return fullFinal
 
+
 def findEmotionsPerFrame2(fuArrayFrames):
-    #fu for emotions
+    # fu for emotions
     anger = ['04', '05', '07', '10', '17', '22', '23', '24', '25', '26']
     disgust = ['09', '10', '16', '17', '25', '26']
     fear = ['01', '02', '04', '05', '20', '25', '26', '27']
     happiness = ['06', '12', '25']
     sadness = ['01', '04', '06', '11', '15', '17']
     surprise = ['01', '02', '05', '26', '27']
-    
+
     pain = ['04', '06', '07', '09', '10', '12', '20', '25', '26', '27', '43']
     cluelessness = ['01', '02', '05', '15', '17', '22']
-    #we also have speech, I ignored it
+    # we also have speech, I ignored it
 
     finalEmotionPoints = []
     angerPointsArray = []
@@ -101,10 +108,10 @@ def findEmotionsPerFrame2(fuArrayFrames):
         painPoints = 0
         cluelessnessPoints = 0
 
-        if(index == 0):
+        if (index == 0):
             continue
 
-        #if face unit of frame, is found on emotion set, add 1 to its score
+        # if face unit of frame, is found on emotion set, add 1 to its score
         for index2, faceUnitValue in enumerate(frame):
             if fuArrayFrames[0][index2] in anger:
                 angerPoints = angerPoints + faceUnitValue
@@ -123,44 +130,45 @@ def findEmotionsPerFrame2(fuArrayFrames):
             if fuArrayFrames[0][index2] in cluelessness:
                 cluelessnessPoints = cluelessnessPoints + faceUnitValue
 
-        #divide by the number of fu's in a set, to get average
-        #the more fus a set has, the more points it may get
-        #if all are found = 1, if no = 0, if half = 0.5 :)
-        angerPointsArray.append(angerPoints/10)
-        disgustPointsArray.append(disgustPoints/6)
-        fearPointsArray.append(fearPoints/8)
-        happinessPointsArray.append(happinessPoints/3)
-        sadnessPointsArray.append(sadnessPoints/6)
-        surprisePointsArray.append(surprisePoints/5)
-        painPointsArray.append(painPoints/11)
-        cluelessnessPointsArray.append(cluelessnessPoints/6)
+        # divide by the number of fu's in a set, to get average
+        # the more fus a set has, the more points it may get
+        # if all are found = 1, if no = 0, if half = 0.5 :)
+        angerPointsArray.append(angerPoints / 10)
+        disgustPointsArray.append(disgustPoints / 6)
+        fearPointsArray.append(fearPoints / 8)
+        happinessPointsArray.append(happinessPoints / 3)
+        sadnessPointsArray.append(sadnessPoints / 6)
+        surprisePointsArray.append(surprisePoints / 5)
+        painPointsArray.append(painPoints / 11)
+        cluelessnessPointsArray.append(cluelessnessPoints / 6)
 
     finalEmotionPoints = {
-        'anger' : angerPointsArray,
-        'disgust' : disgustPointsArray,
-        'fear' : fearPointsArray,
-        'happiness' : happinessPointsArray,
-        'sadness' : sadnessPointsArray,
-        'surprise' : surprisePointsArray,
-        'pain' : painPointsArray,
-        'cluelessness' : cluelessnessPointsArray
+        'anger': angerPointsArray,
+        'disgust': disgustPointsArray,
+        'fear': fearPointsArray,
+        'happiness': happinessPointsArray,
+        'sadness': sadnessPointsArray,
+        'surprise': surprisePointsArray,
+        'pain': painPointsArray,
+        'cluelessness': cluelessnessPointsArray
     }
-    #create dataframe from final emotions points
+    # create dataframe from final emotions points
     finalEmotionPointsDf = pd.DataFrame(finalEmotionPoints)
     return finalEmotionPointsDf
 
+
 def findEmotionsPerFrame(mostCommonUnits):
-    #fu for emotions
+    # fu for emotions
     anger = ['04', '05', '07', '10', '17', '22', '23', '24', '25', '26']
     disgust = ['09', '10', '16', '17', '25', '26']
     fear = ['01', '02', '04', '05', '20', '25', '26', '27']
     happiness = ['06', '12', '25']
     sadness = ['01', '04', '06', '11', '15', '17']
     surprise = ['01', '02', '05', '26', '27']
-    
+
     pain = ['04', '06', '07', '09', '10', '12', '20', '25', '26', '27', '43']
     cluelessness = ['01', '02', '05', '15', '17', '22']
-    #we also have speech, I ignored it
+    # we also have speech, I ignored it
 
     finalEmotionPoints = []
     angerPointsArray = []
@@ -182,7 +190,7 @@ def findEmotionsPerFrame(mostCommonUnits):
         painPoints = 0
         cluelessnessPoints = 0
 
-        #if face unit of frame, is found on emotion set, add 1 to its score
+        # if face unit of frame, is found on emotion set, add 1 to its score
         for faceUnit in frame:
             if faceUnit in anger:
                 angerPoints = angerPoints + 1
@@ -201,45 +209,45 @@ def findEmotionsPerFrame(mostCommonUnits):
             if faceUnit in cluelessness:
                 cluelessnessPoints = cluelessnessPoints + 1
 
-        #divide by the number of fu's in a set, to get average
-        #the more fus a set has, the more points it may get
-        #if all are found = 1, if no = 0, if half = 0.5 :)
-        angerPointsArray.append(angerPoints/10)
-        disgustPointsArray.append(disgustPoints/6)
-        fearPointsArray.append(fearPoints/8)
-        happinessPointsArray.append(happinessPoints/3)
-        sadnessPointsArray.append(sadnessPoints/6)
-        surprisePointsArray.append(surprisePoints/5)
-        painPointsArray.append(painPoints/11)
-        cluelessnessPointsArray.append(cluelessnessPoints/6)
+        # divide by the number of fu's in a set, to get average
+        # the more fus a set has, the more points it may get
+        # if all are found = 1, if no = 0, if half = 0.5 :)
+        angerPointsArray.append(angerPoints / 10)
+        disgustPointsArray.append(disgustPoints / 6)
+        fearPointsArray.append(fearPoints / 8)
+        happinessPointsArray.append(happinessPoints / 3)
+        sadnessPointsArray.append(sadnessPoints / 6)
+        surprisePointsArray.append(surprisePoints / 5)
+        painPointsArray.append(painPoints / 11)
+        cluelessnessPointsArray.append(cluelessnessPoints / 6)
 
     finalEmotionPoints = {
-        'anger' : angerPointsArray,
-        'disgust' : disgustPointsArray,
-        'fear' : fearPointsArray,
-        'happiness' : happinessPointsArray,
-        'sadness' : sadnessPointsArray,
-        'surprise' : surprisePointsArray,
-        'pain' : painPointsArray,
-        'cluelessness' : cluelessnessPointsArray
+        'anger': angerPointsArray,
+        'disgust': disgustPointsArray,
+        'fear': fearPointsArray,
+        'happiness': happinessPointsArray,
+        'sadness': sadnessPointsArray,
+        'surprise': surprisePointsArray,
+        'pain': painPointsArray,
+        'cluelessness': cluelessnessPointsArray
     }
-    #create dataframe from final emotions points
+    # create dataframe from final emotions points
     finalEmotionPointsDf = pd.DataFrame(finalEmotionPoints)
     return finalEmotionPointsDf
 
+
 def getTwoDominantEmotions(finalEmotionPointsDf):
-    #aggregate dataframe by sum of all values
+    # aggregate dataframe by sum of all values
     sumAllEmotions = finalEmotionPointsDf.agg(['sum'])
     print(sumAllEmotions)
-    #to dict because we cant sort a dataframe after aggregation
+    # to dict because we cant sort a dataframe after aggregation
     emotionsDict = sumAllEmotions.to_dict('list')
     for emotion, sum in emotionsDict.items():
         emotionsDict[emotion] = sum[0]
-    #sort descendand to find 2 dominant ones
-    sortedEmotions = sorted(emotionsDict.items(), key=lambda x:x[1], reverse=True)
+    # sort descendand to find 2 dominant ones
+    sortedEmotions = sorted(emotionsDict.items(), key=lambda x: x[1], reverse=True)
 
     twoDominant = []
     twoDominant.append(sortedEmotions[0][0])
     twoDominant.append(sortedEmotions[1][0])
     return twoDominant
-    
