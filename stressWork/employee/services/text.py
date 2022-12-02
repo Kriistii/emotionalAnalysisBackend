@@ -1,8 +1,10 @@
 import text2emotion as te
 from nltk.sentiment import SentimentIntensityAnalyzer
 import nltk
+
 nltk.download('vader_lexicon')
 nltk.download('omw-1.4')
+
 
 def analyzeText(text):
     sia = SentimentIntensityAnalyzer()
