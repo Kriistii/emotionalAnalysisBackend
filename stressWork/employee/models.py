@@ -17,6 +17,7 @@ class Employer(models.Model):
     email = models.CharField(max_length=50)
     surname = models.CharField(max_length=50)
     birthday = models.DateField()
+    
     company_id = models.ForeignKey("Company", on_delete=models.CASCADE)
 
     def __str__(self) -> str:
@@ -31,7 +32,8 @@ class Employee(models.Model):
     birthday = models.DateField()
     company_id = models.ForeignKey("Company", on_delete=models.CASCADE)
     stressed = models.BooleanField(default=False)
-
+    firstSession = models.BooleanField(default=True)
+    
     def __str__(self) -> str:
         return f"{self.name + ' ' + self.surname}"
 

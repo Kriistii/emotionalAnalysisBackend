@@ -138,6 +138,18 @@ class NewRecordAPIView(APIView):
         
         return response
 
+class StartChatAPIView(APIView):
+    def get(self, request, employee_id):
+        e = Employee.objects.get(id=employee_id)
+        employee = EmployeeSerializer(Employee.objects.get(id=employee_id)) 
+        if employee['firstSession']:
+            return chatbot.start_fsession_message
+        else:
+            e.firstSession = False
+            e.save()
+            return chatbot.start_message
+
+
 class CloseChatAPIView(APIView):
 
     def get(self, request):
