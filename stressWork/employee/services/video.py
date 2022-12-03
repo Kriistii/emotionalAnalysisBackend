@@ -1,6 +1,7 @@
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
 import pandas as pd
+from os.path import exists
 
 import csv
 import subprocess
@@ -230,13 +231,30 @@ def findEmotionsPerFrame(mostCommonUnits):
 def getTwoDominantEmotions(finalEmotionPointsDf):
     #aggregate dataframe by sum of all values
     sumAllEmotions = finalEmotionPointsDf.agg(['sum'])
-    print(sumAllEmotions)
     #to dict because we cant sort a dataframe after aggregation
     emotionsDict = sumAllEmotions.to_dict('list')
     for emotion, sum in emotionsDict.items():
         emotionsDict[emotion] = sum[0]
     #sort descendand to find 2 dominant ones
     sortedEmotions = sorted(emotionsDict.items(), key=lambda x:x[1], reverse=True)
+    
+    #save result to a file
+    employeeId = 1 #get authenticated user id
+    csvPath = '../../tmp/csv/video/analysis/{}.csv'.format(employeeId)
+    if(exists(csvPath)):
+        with open(csvPath) as csvFile:
+             writer = csv.writer(csvFile)
+             writer.writerow([sumAllEmotions['anger'], sumAllEmotions['disgust'], sumAllEmotions['fear'],
+                              sumAllEmotions['happiness'], sumAllEmotions['sadness'], sumAllEmotions['surprise']])
+    else:
+        #technically a+ will create it if it doesn't exist
+        with open(csvPath, 'a+') as csvFile:
+             writer = csv.writer(csvFile)
+             writer.writerow(['anger', 'disgust', 'fear', 'happiness', 'sadness', 'surprise'])
+             writer.writerow([sumAllEmotions['anger'], sumAllEmotions['disgust'], sumAllEmotions['fear'],
+                              sumAllEmotions['happiness'], sumAllEmotions['sadness'], sumAllEmotions['surprise']])
+
+
 
     twoDominant = []
     twoDominant.append(sortedEmotions[0][0])
