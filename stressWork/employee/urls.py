@@ -3,6 +3,7 @@ from fcm_django.api.rest_framework import FCMDeviceViewSet, FCMDeviceAuthorizedV
 from .views import *
 
 employee_api = EmployeeAPIView.as_view()
+employee_create = CreateEmployeeAPIView.as_view()
 employee_detail_api = EmployeeDetailAPIView.as_view()
 new_record = NewRecordAPIView.as_view()
 close_chat = CloseChatAPIView.as_view()
@@ -25,6 +26,7 @@ editPrize = EditPrize.as_view()
 urlpatterns = [
     path("", employee_api, name="employees"),
     path('register-notif-token/', FCMDeviceViewSet.as_view({'post': 'create'}), name='create_fcm_device'),
+    path("createEmployee", employee_create, name="employee-create"),
     path("<int:employee_id>", employee_detail_api, name="employee-detail"),
     path("newMessage/<int:employee_id>", new_record, name="new_message"),
     path("startChat/<int:employee_id>", start_chat, name="start_chat"),

@@ -1,15 +1,14 @@
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
 import pandas as pd
+from os.path import exists
 
 import csv
 import subprocess
 
-
 def save_video(video_file, name):
     default_storage.save(
-        'tmp/videos/{}.webm'.format(name), ContentFile(video_file.read()))
-
+                'tmp/videos/{}.webm'.format(name), ContentFile(video_file.read()))
 
 def analyze_video(identifier):
     video_path = default_storage.path('tmp/videos/{}.webm'.format(identifier))
@@ -23,7 +22,6 @@ def analyze_video(identifier):
     emotionsPointsDataFrame = findEmotionsPerFrame2(mostCommonUnits)
     dominantEmotions = getTwoDominantEmotions(emotionsPointsDataFrame)
     print(dominantEmotions)
-
 
 def csvProcessing(identifier):
     with open(default_storage.path('tmp/csv/{}.csv'.format(identifier))) as file:
@@ -83,7 +81,7 @@ def findEmotionsPerFrame2(fuArrayFrames):
     happiness = ['06', '12', '25']
     sadness = ['01', '04', '06', '11', '15', '17']
     surprise = ['01', '02', '05', '26', '27']
-
+    
     pain = ['04', '06', '07', '09', '10', '12', '20', '25', '26', '27', '43']
     cluelessness = ['01', '02', '05', '15', '17', '22']
     # we also have speech, I ignored it
@@ -245,9 +243,28 @@ def getTwoDominantEmotions(finalEmotionPointsDf):
     for emotion, sum in emotionsDict.items():
         emotionsDict[emotion] = sum[0]
     # sort descendand to find 2 dominant ones
-    sortedEmotions = sorted(emotionsDict.items(), key=lambda x: x[1], reverse=True)
+    sortedEmotions = sorted(emotionsDict.items(), key=lambda x:x[1], reverse=True)
+
+    #save result to a file
+    employeeId = 1 #get authenticated user id
+    csvPath = '../../tmp/csv/video/analysis/{}.csv'.format(employeeId)
+    if(exists(csvPath)):
+        with open(csvPath) as csvFile:
+             writer = csv.writer(csvFile)
+             writer.writerow([sumAllEmotions['anger'], sumAllEmotions['disgust'], sumAllEmotions['fear'],
+                              sumAllEmotions['happiness'], sumAllEmotions['sadness'], sumAllEmotions['surprise']])
+    else:
+        #technically a+ will create it if it doesn't exist
+        with open(csvPath, 'a+') as csvFile:
+             writer = csv.writer(csvFile)
+             writer.writerow(['anger', 'disgust', 'fear', 'happiness', 'sadness', 'surprise'])
+             writer.writerow([sumAllEmotions['anger'], sumAllEmotions['disgust'], sumAllEmotions['fear'],
+                              sumAllEmotions['happiness'], sumAllEmotions['sadness'], sumAllEmotions['surprise']])
+
+
 
     twoDominant = []
     twoDominant.append(sortedEmotions[0][0])
     twoDominant.append(sortedEmotions[1][0])
     return twoDominant
+    

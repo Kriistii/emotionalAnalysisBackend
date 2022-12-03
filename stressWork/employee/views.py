@@ -1,19 +1,15 @@
-from .serializers import *
-from .models import *
+from .serializers import EmployeeSerializer, StressRecordSerializer
+from .models import Employee, StressRecord
 from .services import audio, chatbot, video
 import uuid
 from datetime import datetime, timedelta
-
-# from semantic_text_similarity.models import WebBertSimilarity
 
 from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-
-# web_model = WebBertSimilarity(device='cpu', batch_size=10)
-
+from django.contrib.auth.hashers import make_password
 
 class EmployeeStatsAPIView(APIView):
     def get(self, request):
@@ -106,10 +102,10 @@ class StressStats(APIView):
 
         return Response(serializer.data)
 
-
 class StressStatsTimespan(APIView):
     def get(self, request, timespan):
         today = datetime.today()
+        serializer = StressRecordSerializer(data=request.data)
 
         if timespan == "week":
             week_start = today - timedelta(days=today.weekday())
@@ -215,7 +211,7 @@ class NewRecordAPIView(APIView):
 class StartChatAPIView(APIView):
     def get(self, request, employee_id):
         e = Employee.objects.get(id=employee_id)
-        employee = EmployeeSerializer(Employee.objects.get(id=employee_id)) 
+        employee = EmployeeSerializer(Employee.objects.get(id=employee_id))
         if employee['firstSession']:
             return chatbot.start_fsession_message
         else:
@@ -223,6 +219,29 @@ class StartChatAPIView(APIView):
             e.save()
             return chatbot.start_message
 
+
+class CreateEmployeeAPIView(APIView):
+    #todo request filter
+    def post(self, request):
+        if request.POST.get('email', None):
+            emailField = request.POST['email']
+        if request.POST.get('name', None):
+            nameField = request.POST['name']
+        if request.POST.get('surname', None):
+            surnameField = request.POST['surname']
+        if request.POST.get('birthday', None):
+            birthdayField = request.POST['birthday']
+        if request.POST.get('company_id', None):
+            companyField = Company.objects.get(id = request.POST['company_id'])
+        if request.POST.get('password', None):
+            passwordField = make_password(request.POST['password'])
+        stressedField = 0
+
+        employee = Employee.objects.create(email = emailField, password = passwordField, birthday = birthdayField,
+                                            name = nameField, surname = surnameField, company_id = companyField,
+                                            stressed = stressedField)
+        employee.save()
+        return Response("Ok")
 
 class CloseChatAPIView(APIView):
 

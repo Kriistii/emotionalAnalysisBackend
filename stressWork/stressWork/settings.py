@@ -29,7 +29,7 @@ ALLOWED_HOSTS = []
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:8080",
-    "http://localhost:8081",
+    "http://localhost:8081"
 ]  
 
 CSRF_TRUSTED_ORIGINS = ["http://localhost:8080","http://localhost:8081" ]
@@ -50,8 +50,8 @@ INSTALLED_APPS = [
     "employee",
     "django_apscheduler",
     "fcm_django"
+    "rest_framework.authtoken"
 ]
-
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -155,3 +155,7 @@ STATIC_URL = "static/"
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+REST_USE_JWT = True
+JWT_AUTH_COOKIE = 'my-app-auth'
+JWT_AUTH_REFRESH_COOKIE = 'my-refresh-token'
+AUTH_USER_MODEL = 'employee.Employee'

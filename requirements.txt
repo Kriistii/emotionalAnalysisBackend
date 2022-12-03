@@ -74,3 +74,5 @@ typing_extensions==4.4.0
 tzdata==2022.6
 tzlocal==4.2
 urllib3==1.26.12
+dj-rest-auth==2.2.5
+djangorestframework-simplejwt==5.2.2
