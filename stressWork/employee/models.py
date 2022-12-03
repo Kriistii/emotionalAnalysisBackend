@@ -1,5 +1,7 @@
 from django.db import models
+from django import db
 from django.contrib.auth.models import AbstractBaseUser
+from django.contrib.auth.models import PermissionsMixin
 from .managers import CustomUserManager
 
 class Company(models.Model):
@@ -16,34 +18,44 @@ class Employer(models.Model):
     class Meta:
         db_table = 'employers'
     name = models.CharField(max_length=50)
-    email = models.CharField(max_length=50)
     surname = models.CharField(max_length=50)
     birthday = models.DateField()
-    company_id = models.ForeignKey("Company", on_delete=models.CASCADE)
-    password = models.CharField(max_length=200)
+    company = models.ForeignKey("Company", on_delete=models.CASCADE)
+    user = models.ForeignKey("AppUsers", on_delete=models.CASCADE)
 
     def __str__(self) -> str:
         return f"{self.name + self.surname}"
 
 
-class Employee(AbstractBaseUser):
+class Employee(models.Model):
     class Meta:
         db_table = 'employees'
-    REQUIRED_FIELDS = ('password', 'name', 'surname')
-    USERNAME_FIELD = ('email')
     name = models.CharField(max_length=50)
     surname = models.CharField(max_length=50)
     birthday = models.DateField()
     stressed = models.BooleanField(default=False)
     firstSession = models.BooleanField(default=True)
-    company_id = models.ForeignKey("Company", on_delete=models.CASCADE)
-    password = models.CharField(max_length=200)
-    email = models.EmailField(max_length=20, unique=True)
-    objects = CustomUserManager()
+    company = models.ForeignKey("Company", on_delete=models.CASCADE)  
+    user = models.ForeignKey("AppUsers", on_delete=models.CASCADE)
 
     def __str__(self) -> str:
         return f"{self.name + ' ' + self.surname}"
 
+class AppUsers(AbstractBaseUser, PermissionsMixin):
+    class Meta:
+        db_table = 'app_users'
+    REQUIRED_FIELDS = ['password']
+    USERNAME_FIELD = ('email')
+    password = models.CharField(max_length=200)
+    email = models.EmailField(max_length=20, unique=True)
+    is_staff = models.BooleanField(null=True)
+    is_superuser = models.BooleanField(null=True)
+    is_active = models.BooleanField(null=True)
+
+    objects = CustomUserManager()
+
+    def __str__(self) -> str:
+        return f"{self.email, self.is_staff}"
 
 class Emotion(models.Model):
     class Meta:
@@ -72,7 +84,7 @@ class ChatSession(models.Model):
 class ChatSessionMessage(models.Model):
     class Meta:
         db_table = 'chat_session_message'
-    session_id = models.ForeignKey("ChatSession", on_delete=models.CASCADE)
+    session = models.ForeignKey("ChatSession", on_delete=models.CASCADE)
     date = models.DateTimeField()
     video_url = models.CharField(max_length=50)
     audio_url = models.CharField(max_length=50)
@@ -96,7 +108,7 @@ class StressRecord(models.Model):
 class Wheel(models.Model):
     class Meta:
         db_table = 'wheel'
-    company_id = models.ForeignKey("Company", on_delete=models.CASCADE)
+    company = models.ForeignKey("Company", on_delete=models.CASCADE)
     def __str__(self) -> str:
         return f"{self.company + ' date:' + self.date}"
 

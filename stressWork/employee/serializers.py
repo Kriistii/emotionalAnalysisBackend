@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Employer, Employee, StressRecord, EmployeeTopic, Topic, Prize, Wheel
+from .models import Employer, Employee, StressRecord, EmployeeTopic, Topic, Prize, Wheel, AppUsers
 
 
 class EmployeeSerializer(serializers.ModelSerializer):
@@ -42,3 +42,13 @@ class WheelSerializer(serializers.ModelSerializer):
     class Meta:
         model = Wheel
         fields = ['id', 'company_id']
+
+
+class AppUsersSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AppUsers
+        fields = ['id', 'email']
+
+
+
+
