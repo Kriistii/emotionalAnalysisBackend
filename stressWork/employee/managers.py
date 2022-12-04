@@ -1,6 +1,5 @@
 from django.contrib.auth.base_user import BaseUserManager
 
-
 class CustomUserManager(BaseUserManager):
     """
     Custom user model manager where email is the unique identifiers
@@ -10,6 +9,9 @@ class CustomUserManager(BaseUserManager):
         """
         Create and save a User with the given email and password.
         """
+        extra_fields.setdefault('is_staff', False)
+        extra_fields.setdefault('is_superuser', False)
+        extra_fields.setdefault('is_active', True)
         if not email:
             raise ValueError('The Email must be set')
         email = self.normalize_email(email)

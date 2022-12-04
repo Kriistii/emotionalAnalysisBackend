@@ -158,4 +158,4 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 REST_USE_JWT = True
 JWT_AUTH_COOKIE = 'my-app-auth'
 JWT_AUTH_REFRESH_COOKIE = 'my-refresh-token'
-AUTH_USER_MODEL = 'employee.Employee'
+AUTH_USER_MODEL = 'employee.AppUsers'

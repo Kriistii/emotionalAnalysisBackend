@@ -233,15 +233,18 @@ class CreateEmployeeAPIView(APIView):
             surnameField = request.POST['surname']
         if request.POST.get('birthday', None):
             birthdayField = request.POST['birthday']
-        if request.POST.get('company_id', None):
-            companyField = Company.objects.get(id = request.POST['company_id'])
+        if request.POST.get('company', None):
+            companyField = Company.objects.get(id = request.POST['company'])
         if request.POST.get('password', None):
             passwordField = make_password(request.POST['password'])
         stressedField = 0
 
-        employee = Employee.objects.create(email = emailField, password = passwordField, birthday = birthdayField,
-                                            name = nameField, surname = surnameField, company_id = companyField,
-                                            stressed = stressedField)
+        user = AppUsers.objects.create(email = emailField, password = passwordField)
+        user.save()
+        employee = Employee.objects.create(birthday = birthdayField,
+                                            name = nameField, surname = surnameField, company = companyField,
+                                            stressed = stressedField, user = user)
+
         employee.save()
         return Response("Ok")
 
