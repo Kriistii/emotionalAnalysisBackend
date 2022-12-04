@@ -9,11 +9,14 @@ from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
 
 web_model = WebBertSimilarity(device='cpu', batch_size=10)
 from django.contrib.auth.hashers import make_password
 
+
 class EmployeeStatsAPIView(APIView):
+    permission_classes = (IsAuthenticated,)
     def get(self, request):
         numEmployees = Employee.objects.count()
         stressedEmployees = Employee.objects.filter(stressed=True).count()
@@ -160,6 +163,7 @@ class EmployeeDetailAPIView(APIView):
 
 
 class NewRecordAPIView(APIView):
+    permission_classes = (IsAuthenticated,)
     def post(self, request, employee_id):
         name = uuid.uuid4()
         text = ''
@@ -211,6 +215,7 @@ class NewRecordAPIView(APIView):
         return response
 
 class StartChatAPIView(APIView):
+    permission_classes = (IsAuthenticated,)
     def get(self, request, employee_id):
         e = Employee.objects.get(id=employee_id)
         employee = EmployeeSerializer(Employee.objects.get(id=employee_id))
@@ -223,8 +228,9 @@ class StartChatAPIView(APIView):
 
 
 class CreateEmployeeAPIView(APIView):
-    #todo request filter
+    #TODO request filter
     def post(self, request):
+        print(request.POST)
         if request.POST.get('email', None):
             emailField = request.POST['email']
         if request.POST.get('name', None):
@@ -239,18 +245,19 @@ class CreateEmployeeAPIView(APIView):
             passwordField = make_password(request.POST['password'])
         stressedField = 0
 
-        user = AppUsers.objects.create(email = emailField, password = passwordField)
+        user = AppUsers.objects.create(email=emailField, password=passwordField, is_active=True, is_staff=False, is_superuser=False)
         user.save()
         employee = Employee.objects.create(birthday = birthdayField,
                                             name = nameField, surname = surnameField, company = companyField,
                                             stressed = stressedField, user = user)
 
         employee.save()
-        return Response("Ok")
+        return Response("User created")
 
 class CloseChatAPIView(APIView):
-
+    permission_classes = (IsAuthenticated,)
     def get(self, request):
+        print(request.user)
         chat_log = request.session.get('chat_log', None)
         topicAnswer = request.session.get('topicAnswer', None)
         topicQuestion = request.session.get('topicQuestion', None)
@@ -265,3 +272,17 @@ class CloseChatAPIView(APIView):
             del request.session['topic']
         # TODO Implement logic to start a cron for analyzing the data
         return Response("Chat closed")
+
+class RetrieveEmployeeInformation(APIView):
+    permission_classes = (IsAuthenticated,)
+    def post(self, request):
+        print(request.user)
+        user_id = request.data.get('user_id', None)
+        print(user_id)
+        if user_id is not None:
+            emp = EmployeeSerializer(get_object_or_404(Employee, user=get_object_or_404(AppUsers, pk=user_id))).data
+            print(emp['name'])
+            return Response({"employee": emp})
+        else:
+            return Response("User id not found")
+

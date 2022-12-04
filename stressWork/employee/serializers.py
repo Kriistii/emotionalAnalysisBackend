@@ -1,11 +1,11 @@
 from rest_framework import serializers
 from .models import Employer, Employee, StressRecord, EmployeeTopic, Topic, Prize, Wheel, AppUsers
-
+from dj_rest_auth.serializers import UserDetailsSerializer
 
 class EmployeeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Employee
-        fields = ['id', 'name', 'surname', 'birthday', 'company_id']
+        fields = ['id', 'name', 'surname', 'birthday', 'company_id',  'coins']
 
 
 class EmployerSerializer(serializers.ModelSerializer):
@@ -48,6 +48,10 @@ class AppUsersSerializer(serializers.ModelSerializer):
     class Meta:
         model = AppUsers
         fields = ['id', 'email']
+
+
+
+
 
 
 

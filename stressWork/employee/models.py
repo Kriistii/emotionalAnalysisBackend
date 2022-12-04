@@ -37,6 +37,7 @@ class Employee(models.Model):
     firstSession = models.BooleanField(default=True)
     company = models.ForeignKey("Company", on_delete=models.CASCADE)  
     user = models.ForeignKey("AppUsers", on_delete=models.CASCADE)
+    coins = models.IntegerField(default=0)
 
     def __str__(self) -> str:
         return f"{self.name + ' ' + self.surname}"
@@ -47,7 +48,7 @@ class AppUsers(AbstractBaseUser, PermissionsMixin):
     REQUIRED_FIELDS = ['password']
     USERNAME_FIELD = ('email')
     password = models.CharField(max_length=200)
-    email = models.EmailField(max_length=20, unique=True)
+    email = models.EmailField(max_length=50, unique=True)
     is_staff = models.BooleanField(null=True)
     is_superuser = models.BooleanField(null=True)
     is_active = models.BooleanField(null=True)
