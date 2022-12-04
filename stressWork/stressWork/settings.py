@@ -49,7 +49,7 @@ INSTALLED_APPS = [
     "corsheaders",
     "employee",
     "django_apscheduler",
-    "fcm_django"
+    "fcm_django",
     "rest_framework.authtoken"
 ]
 

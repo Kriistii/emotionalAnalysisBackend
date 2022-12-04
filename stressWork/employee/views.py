@@ -1,14 +1,16 @@
-from .serializers import EmployeeSerializer, StressRecordSerializer
-from .models import Employee, StressRecord
+from .serializers import *
+from .models import *
 from .services import audio, chatbot, video
 import uuid
 from datetime import datetime, timedelta
+from semantic_text_similarity.models import WebBertSimilarity
 
 from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+web_model = WebBertSimilarity(device='cpu', batch_size=10)
 from django.contrib.auth.hashers import make_password
 
 class EmployeeStatsAPIView(APIView):
