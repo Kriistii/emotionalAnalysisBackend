@@ -167,9 +167,6 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 REST_USE_JWT = True
 JWT_AUTH_COOKIE = 'my-app-auth'
 JWT_AUTH_REFRESH_COOKIE = 'my-refresh-token'
-REST_AUTH_SERIALIZERS = {
-    'USER_DETAILS_SERIALIZER ': 'stressWork.employee.serializers.AppUsersSerializer',
-}
 SIMPLE_JWT = {
     'REFRESH_TOKEN_LIFETIME': timedelta(days=15),
     'ROTATE_REFRESH_TOKENS': True,
