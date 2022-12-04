@@ -167,7 +167,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 REST_USE_JWT = True
 JWT_AUTH_COOKIE = 'my-app-auth'
 JWT_AUTH_REFRESH_COOKIE = 'my-refresh-token'
-SIMPLE_JWT = {
+JWT_AUTH = {
     'REFRESH_TOKEN_LIFETIME': timedelta(days=15),
     'ROTATE_REFRESH_TOKENS': True,
 }
