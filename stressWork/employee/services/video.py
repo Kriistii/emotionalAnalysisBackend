@@ -11,13 +11,16 @@ def save_video(video_file, name):
                 'tmp/videos/{}.webm'.format(name), ContentFile(video_file.read()))
 
 def analyze_video(identifier):
-    video_path = default_storage.path('tmp/videos/{}.webm'.format(identifier))
+    video_path = default_storage.path('tmp/videos/{}.mov'.format(identifier))
     openface_path = default_storage.path('OpenFace')
     csv_path = default_storage.path('tmp/csv')
-    print(csv_path)
-    r = subprocess.call(
-        f' /Users/alessioferrara/git/stressWorkBack/OpenFace/build/bin/FeatureExtraction -f {video_path} -aus -out_dir {csv_path} ',
-        shell=True)
+    string = '\\stressWork\\'
+    splitResult = openface_path.split(string)
+    final_openface_path = splitResult[0] + '\\' + splitResult[1]
+    #mac_add = '/build/bin/' add this to path when running it in mac
+    print(final_openface_path)
+    subprocess.call(f' {final_openface_path}/FeatureExtraction -f {video_path} -aus -out_dir {csv_path} ',
+       shell=True)
     mostCommonUnits = csvProcessing2(identifier)
     emotionsPointsDataFrame = findEmotionsPerFrame2(mostCommonUnits)
     dominantEmotions = getTwoDominantEmotions(emotionsPointsDataFrame)
@@ -60,7 +63,7 @@ def csvProcessing2(identifier):
                 for element1 in row:
                     if ("_r" in element1):
                         # save units to head array (only the unit number)
-                        headArray.append(element1[2:4])
+                        headArray.append(element1[3:5])
                 fullFinal.append(headArray)
             else:
                 for index, element in enumerate(row):
@@ -68,7 +71,6 @@ def csvProcessing2(identifier):
                     if 5 <= index <= 21:
                         final.append(float(element))
                 fullFinal.append(final)
-        print(headArray)
     # full final has the best predicted fus
     return fullFinal
 
@@ -240,26 +242,31 @@ def getTwoDominantEmotions(finalEmotionPointsDf):
     print(sumAllEmotions)
     # to dict because we cant sort a dataframe after aggregation
     emotionsDict = sumAllEmotions.to_dict('list')
+    
     for emotion, sum in emotionsDict.items():
         emotionsDict[emotion] = sum[0]
+    
+    print(emotionsDict)
     # sort descendand to find 2 dominant ones
     sortedEmotions = sorted(emotionsDict.items(), key=lambda x:x[1], reverse=True)
 
     #save result to a file
     employeeId = 1 #get authenticated user id
-    csvPath = '../../tmp/csv/video/analysis/{}.csv'.format(employeeId)
+    csvPath = default_storage.path('tmp/csv/emotions/{}.csv').format(employeeId)
     if(exists(csvPath)):
-        with open(csvPath) as csvFile:
+        with open(csvPath, 'a') as csvFile:
              writer = csv.writer(csvFile)
-             writer.writerow([sumAllEmotions['anger'], sumAllEmotions['disgust'], sumAllEmotions['fear'],
-                              sumAllEmotions['happiness'], sumAllEmotions['sadness'], sumAllEmotions['surprise']])
+             writer.writerow([emotionsDict['anger'], emotionsDict['disgust'], emotionsDict['fear'],
+                    emotionsDict['happiness'], emotionsDict['sadness'], emotionsDict['surprise']])
     else:
         #technically a+ will create it if it doesn't exist
         with open(csvPath, 'a+') as csvFile:
              writer = csv.writer(csvFile)
              writer.writerow(['anger', 'disgust', 'fear', 'happiness', 'sadness', 'surprise'])
-             writer.writerow([sumAllEmotions['anger'], sumAllEmotions['disgust'], sumAllEmotions['fear'],
-                              sumAllEmotions['happiness'], sumAllEmotions['sadness'], sumAllEmotions['surprise']])
+             writer.writerow([emotionsDict['anger'], emotionsDict['disgust'], emotionsDict['fear'],
+                    emotionsDict['happiness'], emotionsDict['sadness'], emotionsDict['surprise']])
+    
+    
 
 
 

@@ -245,6 +245,15 @@ class CreateEmployeeAPIView(APIView):
                                         
         employee.save()
         return Response("Ok")
+    
+
+
+class TestVideoAnalysisAPIView(APIView):
+    #todo request filter
+    def get(self, request):
+        name = 'happy'
+        video.analyze_video(name)
+        return Response("Ok")
 
 class CloseChatAPIView(APIView):
 
