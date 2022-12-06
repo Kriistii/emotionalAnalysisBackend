@@ -216,9 +216,8 @@ def sessionResultsProcessing():
                     if(key < len(emotionsArray)):
                         emotionsValues[emotionsArray[key]] = emotionsValues[emotionsArray[key]] + float(element1)
     valueSum = sum(emotionsValues.values())
-    normalizedValues = [float(emotionsValues[i])/valueSum for i in emotionsValues]
-
-    for i, value in enumerate(normalizedValues):
-        emotionsValues[i] = value
-    print(emotionsValues)
+    normalizedValues = dict()
+    for key, i in emotionsValues.items():
+        normalizedValues[key] = round(i * 100/ valueSum, 2) 
+    print(normalizedValues)
     return 1
