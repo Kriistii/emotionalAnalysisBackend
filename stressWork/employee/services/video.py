@@ -17,7 +17,9 @@ def analyze_video(identifier):
     #get paths, for video processing
     video_path = default_storage.path('tmp/videos/{}.mov'.format(identifier))
     openface_path = default_storage.path('OpenFace')
-    csv_path = default_storage.path('tmp/csv')
+    employeeId = 1 #todo get key form token or add uuid
+    csv_path = default_storage.path(f'tmp/csv/{employeeId}')
+    os.mkdir(csv_path)
     string = '\\stressWork\\'
     splitResult = openface_path.split(string)
     final_openface_path = splitResult[0] + '\\' + splitResult[1]
@@ -57,15 +59,19 @@ def analyze_video(identifier):
         #emotion analysis
         mostCommonUnits = csvProcessing2(end)
         emotionsPointsDataFrame = findEmotionsPerFrame2(mostCommonUnits)
-        dominantEmotions = getTwoDominantEmotions(emotionsPointsDataFrame)
+        sumEmotionsAndSaveCsv(emotionsPointsDataFrame)
         start = end
-
-    #shutil.rmtree(default_storage.path('tmp/videos/{}'.format(identifier)))
+    
+    sessionResultsProcessing()
+    #delete videos, todo delete all csvs, leave only the main one
+    shutil.rmtree(default_storage.path('tmp/videos/{}'.format(identifier)))
+    shutil.rmtree(default_storage.path('tmp/csv/{}'.format(employeeId)))
     return 1
     
 
 def csvProcessing2(identifier):
-    with open(default_storage.path('tmp/csv/{}.csv'.format(identifier))) as file:
+    employeeId = 1
+    with open(default_storage.path('tmp/csv/{}/{}.csv'.format(employeeId, identifier))) as file:
         fullFinal = []
         headArray = []
         reader = csv.reader(file)
@@ -151,7 +157,7 @@ def findEmotionsPerFrame2(fuArrayFrames):
     finalEmotionPointsDf = pd.DataFrame(finalEmotionPoints)
     return finalEmotionPointsDf
 
-def getTwoDominantEmotions(finalEmotionPointsDf):
+def sumEmotionsAndSaveCsv(finalEmotionPointsDf):
     # aggregate dataframe by sum of all values
     sumAllEmotions = finalEmotionPointsDf.agg(['sum'])
     # to dict because we cant sort a dataframe after aggregation
@@ -164,12 +170,12 @@ def getTwoDominantEmotions(finalEmotionPointsDf):
     saveResultToCsv(emotionsDict)
     
     # sort descendand to find 2 dominant ones
-    sortedEmotions = sorted(emotionsDict.items(), key=lambda x:x[1], reverse=True)
+    #sortedEmotions = sorted(emotionsDict.items(), key=lambda x:x[1], reverse=True)
 
-    twoDominant = []
-    twoDominant.append(sortedEmotions[0][0])
-    twoDominant.append(sortedEmotions[1][0])
-    return twoDominant
+    #twoDominant = []
+    #twoDominant.append(sortedEmotions[0][0])
+    #twoDominant.append(sortedEmotions[1][0])
+    return 1
 
 def saveResultToCsv(emotionsDict):
     #save result to a file
@@ -191,4 +197,28 @@ def saveResultToCsv(emotionsDict):
              writer.writerow([emotionsDict['anger'], emotionsDict['disgust'], emotionsDict['fear'],
                     emotionsDict['happiness'], emotionsDict['sadness'], emotionsDict['surprise']])
     return 1
-    
+
+
+def sessionResultsProcessing():
+    employeeId = 1 #todo get authenticated user id, or set uniqueid idk
+    finalCsvPath = default_storage.path(f'tmp/csv/emotionAnalysis/{employeeId}.csv')
+    with open(finalCsvPath, 'r') as file:
+        reader = csv.reader(file)
+        emotionsArray = []
+        emotionsValues = dict()
+        for i, row in enumerate(reader):
+            if (i == 0):
+                for element in row:
+                    emotionsArray.append(element)
+                    emotionsValues[element]=0
+            else:
+                for key, element1 in enumerate(row):
+                    if(key < len(emotionsArray)):
+                        emotionsValues[emotionsArray[key]] = emotionsValues[emotionsArray[key]] + float(element1)
+    valueSum = sum(emotionsValues.values())
+    normalizedValues = [float(emotionsValues[i])/valueSum for i in emotionsValues]
+
+    for i, value in enumerate(normalizedValues):
+        emotionsValues[i] = value
+    print(emotionsValues)
+    return 1
