@@ -237,7 +237,7 @@ class CreateEmployeeAPIView(APIView):
             passwordField = make_password(request.POST['password'])
         stressedField = 0
 
-        user = AppUsers.objects.create(email = emailField, password = passwordField)
+        user = AppUsers.objects.create(email = emailField, password = passwordField, isActice = True)
         user.save()
         employee = Employee.objects.create(birthday = birthdayField,
                                             name = nameField, surname = surnameField, company = companyField,

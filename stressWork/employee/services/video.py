@@ -243,6 +243,8 @@ def getTwoDominantEmotions(finalEmotionPointsDf):
     # to dict because we cant sort a dataframe after aggregation
     emotionsDict = sumAllEmotions.to_dict('list')
     
+    saveResultToCsv(emotionsDict)
+    
     for emotion, sum in emotionsDict.items():
         emotionsDict[emotion] = sum[0]
     
@@ -250,8 +252,14 @@ def getTwoDominantEmotions(finalEmotionPointsDf):
     # sort descendand to find 2 dominant ones
     sortedEmotions = sorted(emotionsDict.items(), key=lambda x:x[1], reverse=True)
 
+    twoDominant = []
+    twoDominant.append(sortedEmotions[0][0])
+    twoDominant.append(sortedEmotions[1][0])
+    return twoDominant
+
+def saveResultToCsv(emotionsDict):
     #save result to a file
-    employeeId = 1 #get authenticated user id
+    employeeId = 1 #todo get authenticated user id
     csvPath = default_storage.path('tmp/csv/emotions/{}.csv').format(employeeId)
     if(exists(csvPath)):
         with open(csvPath, 'a') as csvFile:
@@ -265,13 +273,4 @@ def getTwoDominantEmotions(finalEmotionPointsDf):
              writer.writerow(['anger', 'disgust', 'fear', 'happiness', 'sadness', 'surprise'])
              writer.writerow([emotionsDict['anger'], emotionsDict['disgust'], emotionsDict['fear'],
                     emotionsDict['happiness'], emotionsDict['sadness'], emotionsDict['surprise']])
-    
-    
-
-
-
-    twoDominant = []
-    twoDominant.append(sortedEmotions[0][0])
-    twoDominant.append(sortedEmotions[1][0])
-    return twoDominant
     
