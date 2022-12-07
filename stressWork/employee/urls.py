@@ -9,6 +9,7 @@ new_record = NewRecordAPIView.as_view()
 close_chat = CloseChatAPIView.as_view()
 start_chat = StartChatAPIView.as_view()
 retrieve_employee_information = RetrieveEmployeeInformation.as_view()
+test_video_analysis = TestVideoAnalysisAPIView.as_view()
 
 stats = EmployeeStatsAPIView.as_view()
 trend = StressStats.as_view()
@@ -28,6 +29,7 @@ urlpatterns = [
     path("", employee_api, name="employees"),
     path('register-notif-token/', FCMDeviceAuthorizedViewSet.as_view({'post': 'create'}), name='create_fcm_device'),
     path('retrieveEmployeeInformation', retrieve_employee_information, name="retrieve-employee-information" ),
+    path("testVideoAnalysis", test_video_analysis, name="test-video-analysis"),
     path("createEmployee", employee_create, name="employee-create"),
     path("<int:employee_id>", employee_detail_api, name="employee-detail"),
     path("newMessage/<int:employee_id>", new_record, name="new_message"),

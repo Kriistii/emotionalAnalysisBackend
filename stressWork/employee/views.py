@@ -14,7 +14,6 @@ from rest_framework.permissions import IsAuthenticated
 web_model = WebBertSimilarity(device='cpu', batch_size=10)
 from django.contrib.auth.hashers import make_password
 
-
 class EmployeeStatsAPIView(APIView):
     permission_classes = (IsAuthenticated,)
     def get(self, request):
@@ -230,7 +229,6 @@ class StartChatAPIView(APIView):
 class CreateEmployeeAPIView(APIView):
     #TODO request filter
     def post(self, request):
-        print(request.POST)
         if request.POST.get('email', None):
             emailField = request.POST['email']
         if request.POST.get('name', None):
@@ -250,14 +248,22 @@ class CreateEmployeeAPIView(APIView):
         employee = Employee.objects.create(birthday = birthdayField,
                                             name = nameField, surname = surnameField, company = companyField,
                                             stressed = stressedField, user = user)
-
+                                        
         employee.save()
-        return Response("User created")
+        return Response("Ok")
+
+
+
+class TestVideoAnalysisAPIView(APIView):
+    #todo request filter
+    def get(self, request):
+        name = 'happy'
+        video.analyze_video(name)
+        return Response("Ok")
 
 class CloseChatAPIView(APIView):
     permission_classes = (IsAuthenticated,)
     def get(self, request):
-        print(request.user)
         chat_log = request.session.get('chat_log', None)
         topicAnswer = request.session.get('topicAnswer', None)
         topicQuestion = request.session.get('topicQuestion', None)
