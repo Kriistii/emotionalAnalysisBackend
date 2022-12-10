@@ -10,8 +10,8 @@ import os
 import shutil
 
 def save_video(video_file, name):
-    default_storage.save(
-                'tmp/videos/{}.webm'.format(name), ContentFile(video_file.read()))
+    with open('tmp/videos/{}.webm'.format(name), "wb") as binary_file:
+        binary_file.write(video_file)
 
 def analyze_video(identifier):
     #get paths, for video processing

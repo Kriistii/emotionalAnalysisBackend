@@ -1,6 +1,7 @@
 from django.urls import path
 from fcm_django.api.rest_framework import FCMDeviceViewSet, FCMDeviceAuthorizedViewSet
 from .views import *
+from .consumers import *
 
 employee_api = EmployeeAPIView.as_view()
 employee_create = CreateEmployeeAPIView.as_view()
@@ -46,3 +47,4 @@ urlpatterns = [
     path("getWheels", wheels, name="wheels"),
     path("newWheel", newWheel, name="newWheel"),
 ]
+
