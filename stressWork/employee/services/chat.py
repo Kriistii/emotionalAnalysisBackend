@@ -1,6 +1,6 @@
 from asgiref.sync import sync_to_async
 from ..models import Employee, ChatSession, ChatSessionMessage
-import datetime
+from datetime import datetime
 
 
 @sync_to_async

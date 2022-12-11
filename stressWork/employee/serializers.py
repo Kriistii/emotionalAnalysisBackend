@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Employer, Employee, StressRecord, EmployeeTopic, Topic, Prize, Wheel, AppUsers
+from .models import Employer, Employee, StressRecord, EmployeeTopic, Topic, Prize, Wheel, AppUsers, ChatSessionMessage
 from dj_rest_auth.serializers import UserDetailsSerializer
 
 class EmployeeSerializer(serializers.ModelSerializer):
@@ -48,6 +48,12 @@ class AppUsersSerializer(serializers.ModelSerializer):
     class Meta:
         model = AppUsers
         fields = ['id', 'email']
+
+
+class ChatSessionMessageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ChatSessionMessage
+        fields = ['date', 'video_url', 'audio_url', 'text', 'chatbot_answer', 'date']
 
 
 

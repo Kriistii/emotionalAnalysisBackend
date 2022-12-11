@@ -17,6 +17,10 @@ from transformers.file_utils import ModelOutput
 from dataclasses import dataclass
 import os
 from ..utilityFunctions import safe_open
+from ..models import ChatSessionMessage, ChatSession
+from ..serializers import ChatSessionMessageSerializer
+from moviepy.editor import *
+from asgiref.sync import sync_to_async
 
 
 def speech_to_text(session_id, identifier):
@@ -70,7 +74,8 @@ def analyze_audio(identifier):
         with torch.no_grad():
             logits = model(input_values, attention_mask=attention_mask).logits
         scores = F.softmax(logits, dim=1).detach().cpu().numpy()[0]
-        outputs = [{"Emotion": config.id2label[i], "Score": f"{round(score * 100, 3):.1f}%"} for i, score in enumerate(scores)]
+        outputs = [{"Emotion": config.id2label[i], "Score": f"{round(score * 100, 3):.1f}%"} for i, score in
+                   enumerate(scores)]
         return outputs
 
     def prediction(path):
@@ -80,6 +85,7 @@ def analyze_audio(identifier):
         print(r.to_string())
 
     prediction(audio_path)
+
 
 @dataclass
 class SpeechClassifierOutput(ModelOutput):
@@ -189,3 +195,18 @@ class Wav2Vec2ForSpeechClassification(Wav2Vec2PreTrainedModel):
             attentions=outputs.attentions,
         )
 
+
+@sync_to_async
+def mergeAudio(chat_session_id):
+    messages = ChatSessionMessageSerializer(ChatSessionMessage.objects.filter(session=ChatSession(pk=chat_session_id)).order_by('date'), many=True).data
+    if len(messages):
+        audios = []
+        for message in messages:
+            if message['audio_url'] is not None:
+                audios.append(AudioFileClip(message['audio_url']))
+        if len(audios):
+            final = concatenate_audioclips(audios)
+            path = 'tmp/{}/full_audio.wav'.format(chat_session_id)
+            final.write_audiofile(path)
+    else:
+        return None

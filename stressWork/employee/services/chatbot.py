@@ -19,7 +19,7 @@ restart_conversation_phrase = ["I am sorry but I didn't understand. By the way, 
                                "Oh, I think i didn't understand what you mean, but it is fine, we can talk about it later. Let's change subject for the moment! "]
 
 
-def ask(question, employee_id, session, chat_log=None,):
+async def ask(question, employee_id, session, chat_log=None,):
     prompt_text = f'{chat_log}{restart_sequence}:{question}{start_sequence}:'
     response = openai.Completion.create(
         model="text-davinci-003",
@@ -36,10 +36,10 @@ def ask(question, employee_id, session, chat_log=None,):
     if len(story) > 1 and '?' in story:
         return str(story)
     if len(story) <= 1 or re.search("I didn't understand", story, re.IGNORECASE):
-        answer = keep_conversation_alive(employee_id, session)
+        answer = await keep_conversation_alive(employee_id, session)
         return f'{restart_conversation_phrase[random.randint(0, len(restart_conversation_phrase) - 1)]} {answer}'
     if '?' not in story:
-        question = keep_conversation_alive(employee_id, session)
+        question = await keep_conversation_alive(employee_id, session)
         return f"{story} Let's change topic! {question}"
 
 
@@ -71,11 +71,11 @@ def keep_conversation_alive(emp_id, session):
         return answer
 
 
-def compute_answer(session, question, employee_id):
+async def compute_answer(session, question, employee_id):
     chat_log = session.get('chat_log', None)
     if chat_log is None:
         chat_log = start_chat_log
-    answer = ask(question, employee_id, session, chat_log)
+    answer = await ask(question, employee_id, session, chat_log)
     session['chat_log'] = append_interaction_to_chat_log(
         question, answer, chat_log)
     # TODO save the question and the answer somewhere

@@ -16,10 +16,15 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         await chat.createChatSession(session_id, employee_id)
         await self.accept()
 
-    def disconnect(self, close_code):
+    async def disconnect(self, close_code):
         session = self.scope["session"]
         chat_session_id = session['session_id']
-        video_path = video.create_merged_video()
+        await text_service.mergeText(chat_session_id)
+        # run analysis on text, video and audio
+        await audio.mergeAudio(chat_session_id)
+        await video.mergeVideo(chat_session_id)
+        # todo Delete all the chatSessionMessages
+        # TODO run the analysis inside the functions
         pass
 
     async def receive(self, text_data=None, bytes_data=None, **kwargs):
@@ -30,7 +35,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         try:
             if text_data:
                 message = json.loads(text_data)
-                answer = chatbot.compute_answer(session, message['data'], employee_id)
+                answer = await (chatbot.compute_answer(session, message['data'], employee_id))
                 await chat.createChatSessionMessage(chat_session_id, message['data'], answer, None, None)
                 await self.send(json.dumps({"answer_chatbot": answer, "question": message['data'], "type": 'text'}))
             if bytes_data:
@@ -39,7 +44,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                     audio_file = bytes_data
                     audio_path = audio.save_audio(chat_session_id, audio_file, name) #add path to return of save audio
                     text = audio.speech_to_text(chat_session_id, name)
-                    answer = chatbot.compute_answer(session, text, employee_id)
+                    answer = await chatbot.compute_answer(session, text, employee_id)
                     await chat.createChatSessionMessage(chat_session_id, text, answer, audio_path, None)
                     await self.send(json.dumps({"answer_chatbot": answer, "question": text, "type": 'media'}))
                 elif kind.extension == 'mkv':
@@ -47,7 +52,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                     video_path = video.save_video(chat_session_id, video_file, name)
                     audio_path = audio.video_to_audio(chat_session_id, name)
                     text = audio.speech_to_text(chat_session_id, name)
-                    answer = chatbot.compute_answer(session, text, employee_id)
+                    answer = await chatbot.compute_answer(session, text, employee_id)
                     await chat.createChatSessionMessage(chat_session_id, text, answer, audio_path, video_path)
                     await self.send(json.dumps({"answer_chatbot": answer, "question": text, "type": 'media'}))
         except Exception as e:
