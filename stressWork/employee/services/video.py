@@ -16,7 +16,7 @@ from asgiref.sync import sync_to_async
 
 
 @sync_to_async
-def mergeVideo(session_id):
+def mergeAndAnalyzeVideo(session_id):
     messages = ChatSessionMessageSerializer(ChatSessionMessage.objects.filter(session=ChatSession(pk=session_id)).order_by('date'), many=True).data
     if len(messages):
         videos = []
@@ -31,7 +31,7 @@ def mergeVideo(session_id):
             chat_session = ChatSession.objects.get(pk=session_id)
             chat_session.full_video_path = path
             chat_session.save()
-            return path
+        analyze_video(session_id)
     else:
         return None
 
@@ -45,11 +45,10 @@ def save_video(session_id, video_file, name):
 
 def analyze_video(identifier):
     # get paths, for video processing
-    video_path = default_storage.path('tmp/videos/{}.mov'.format(identifier))
+    video_path = default_storage.path('tmp/{}/full_video.webm'.format(identifier))
     openface_path = default_storage.path('OpenFace')
-    employeeId = 1  # todo get key form token or add uuid
-    csv_path = default_storage.path(f'tmp/csv/{employeeId}')
-    os.mkdir(csv_path)
+    csv_path = default_storage.path(f'tmp/{identifier}/csv')
+    os.makedirs(os.path.dirname(csv_path), exist_ok=True)
     string = '\\stressWork\\'
     splitResult = openface_path.split(string)
     final_openface_path = splitResult[0] + '\\' + splitResult[1]
@@ -63,7 +62,7 @@ def analyze_video(identifier):
 
     start = 0
     # create dir to store all 1s videos
-    os.mkdir(default_storage.path('tmp/videos/{}'.format(identifier)))
+    os.makedirs(os.path.dirname('tmp/{}/tmp_videos'.format(identifier)), exist_ok=True)
     while (duration > 1):
         end = start + 1
         # create duration slots
@@ -78,7 +77,7 @@ def analyze_video(identifier):
             endString = str(end)
 
         duration = duration - 1
-        outputPath = default_storage.path('tmp/videos/{}/{}.mov'.format(identifier, end))
+        outputPath = default_storage.path('tmp/{}/tmp_videos/{}.mov'.format(identifier, end))
         # split video in 1s videos
         subprocess.run(f" ffmpeg -i {video_path} -ss  00:00:{startString} -to  00:00:{endString} -c copy {outputPath}",
                        shell=True)
@@ -87,21 +86,20 @@ def analyze_video(identifier):
                         shell=True)
 
         # emotion analysis
-        mostCommonUnits = csvProcessing2(end)
+        mostCommonUnits = csvProcessing2(identifier, end)
         emotionsPointsDataFrame = findEmotionsPerFrame2(mostCommonUnits)
-        sumEmotionsAndSaveCsv(emotionsPointsDataFrame)
+        sumEmotionsAndSaveCsv(emotionsPointsDataFrame, identifier)
         start = end
 
     sessionResultsProcessing()
     # delete videos, todo delete all csvs, leave only the main one
-    shutil.rmtree(default_storage.path('tmp/videos/{}'.format(identifier)))
-    shutil.rmtree(default_storage.path('tmp/csv/{}'.format(employeeId)))
+    shutil.rmtree(default_storage.path('tmp/{}/tmp_videos'.format(identifier)))
+    shutil.rmtree(default_storage.path('tmp/{}/csv'.format(identifier)))
     return 1
 
 
-def csvProcessing2(identifier):
-    employeeId = 1
-    with open(default_storage.path('tmp/csv/{}/{}.csv'.format(employeeId, identifier))) as file:
+def csvProcessing2(session_id, csv_name):
+    with open(default_storage.path('tmp/{}/csv/{}.csv'.format(session_id, csv_name))) as file:
         fullFinal = []
         headArray = []
         reader = csv.reader(file)
@@ -189,7 +187,7 @@ def findEmotionsPerFrame2(fuArrayFrames):
     return finalEmotionPointsDf
 
 
-def sumEmotionsAndSaveCsv(finalEmotionPointsDf):
+def sumEmotionsAndSaveCsv(finalEmotionPointsDf, session_id):
     # aggregate dataframe by sum of all values
     sumAllEmotions = finalEmotionPointsDf.agg(['sum'])
     # to dict because we cant sort a dataframe after aggregation
@@ -198,25 +196,17 @@ def sumEmotionsAndSaveCsv(finalEmotionPointsDf):
     for emotion, sum in emotionsDict.items():
         emotionsDict[emotion] = sum[0]
 
-    saveResultToCsv(emotionsDict)
-
-    # sort descendand to find 2 dominant ones
-    # sortedEmotions = sorted(emotionsDict.items(), key=lambda x:x[1], reverse=True)
-
-    # twoDominant = []
-    # twoDominant.append(sortedEmotions[0][0])
-    # twoDominant.append(sortedEmotions[1][0])
+    saveResultToCsv(emotionsDict, session_id)
     return 1
 
 
-def saveResultToCsv(emotionsDict):
+def saveResultToCsv(emotionsDict, session_id):
     # save result to a file
-    employeeId = 1  # todo get authenticated user id, or set uniqueid idk
-    dirPath = default_storage.path('tmp/csv/emotionAnalysis')
+    dirPath = default_storage.path(f'tmp/{session_id}')
     if (not os.path.exists(dirPath)):
         os.mkdir(dirPath)
 
-    csvPath = dirPath + f"/{employeeId}.csv"
+    csvPath = dirPath + f"/video_analysis.csv"
     if (exists(csvPath)):
         with open(csvPath, 'a') as csvFile:
             writer = csv.writer(csvFile)
@@ -251,5 +241,9 @@ def sessionResultsProcessing():
     normalizedValues = dict()
     for key, i in emotionsValues.items():
         normalizedValues[key] = round(i * 100 / valueSum, 2)
-    print(normalizedValues)
+    # sort descendand to find 2 dominant ones
+    sortedEmotions = sorted(normalizedValues.items(), key=lambda x:x[1], reverse=True)
+    dominant = []
+    dominant.append(sortedEmotions[0][0])
+    dominant.append(sortedEmotions[1][0])
     return 1

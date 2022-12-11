@@ -256,7 +256,7 @@ class CreateEmployeeAPIView(APIView):
 class TestVideoAnalysisAPIView(APIView):
     #todo request filter
     def get(self, request):
-        name = 'happy'
+        name = 1
         video.analyze_video(name)
         return Response("Ok")
 
