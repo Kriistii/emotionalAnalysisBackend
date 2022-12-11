@@ -1,3 +1,5 @@
+import uuid
+
 from django.db import models
 from django import db
 from django.contrib.auth.models import AbstractBaseUser
@@ -70,8 +72,7 @@ class Emotion(models.Model):
 class ChatSession(models.Model):
     class Meta:
         db_table = 'chat_session'
-
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4(), editable=False)
     employee = models.ForeignKey("Employee", on_delete=models.CASCADE)
     date = models.DateTimeField()
     first_prevailing_emotion = models.ForeignKey("Emotion", related_name="first_prevailing_emotion", null=True, on_delete=models.DO_NOTHING)
@@ -89,13 +90,13 @@ class ChatSessionMessage(models.Model):
         db_table = 'chat_session_message'
     session = models.ForeignKey("ChatSession", on_delete=models.CASCADE)
     date = models.DateTimeField()
-    video_url = models.CharField(max_length=50)
-    audio_url = models.CharField(max_length=50)
+    video_url = models.CharField(max_length=100, null=True)
+    audio_url = models.CharField(max_length=100, null=True)
     text = models.TextField()
     chatbot_answer = models.TextField()
 
     def __str__(self) -> str:
-        return f"{self.session_id + ' date:' + self.date}"
+        return f"{self.pk + ' date:' + self.date}"
 
 class StressRecord(models.Model):
     class Meta:

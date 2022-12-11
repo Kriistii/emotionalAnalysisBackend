@@ -1,0 +1,20 @@
+[
+    {
+        "model" : "employee.Company",
+        "pk" : 1,
+        "fields" : {
+            "company_name" : "Nexi",
+            "active_users_number": 150,
+            "country": "Italy"
+        }
+    },
+    {
+        "model" : "employee.Company",
+        "pk" : 2,
+        "fields" : {
+            "company_name" : "Telecom",
+            "active_users_number": 200,
+            "country": "Italy"
+        }
+    }
+]

@@ -8,10 +8,13 @@ import subprocess
 import cv2
 import os
 import shutil
+from ..utilityFunctions import *
 
 def save_video(session_id, video_file, name):
-    with open('tmp/{}/video/{}.webm'.format(session_id, name), "wb") as binary_file:
+    path = 'tmp/{}/videos/{}.webm'.format(session_id, name)
+    with safe_open(path, 'wb') as binary_file:
         binary_file.write(video_file)
+    return path
 
 def analyze_video(identifier):
     #get paths, for video processing

@@ -15,26 +15,34 @@ from torch.nn import BCEWithLogitsLoss, CrossEntropyLoss, MSELoss
 from typing import Optional, Tuple
 from transformers.file_utils import ModelOutput
 from dataclasses import dataclass
-from django.core.files.base import ContentFile
+import os
+from ..utilityFunctions import safe_open
 
-def speech_to_text(identifier):
-    audio_path = default_storage.path("tmp/audios/{}.wav".format(identifier))
+
+def speech_to_text(session_id, identifier):
+    audio_path = default_storage.path("tmp/{}/audios/{}.wav".format(session_id, identifier))
     recognizer = sr.Recognizer()
     with sr.AudioFile(audio_path) as source:
         audio_data = recognizer.record(source)
         text = recognizer.recognize_google(audio_data)
         return text.lower()
 
-def video_to_audio(identifier):
-    video_path = default_storage.path("tmp/videos/{}.webm".format(identifier))
+
+def video_to_audio(session_id, identifier):
+    video_path = default_storage.path("tmp/{}/videos/{}.webm".format(session_id, identifier))
     clip = mp.VideoFileClip(r'{}'.format(video_path))
-    audio_folder_path = default_storage.path("tmp/audios/")
-    clip.audio.write_audiofile(f'{audio_folder_path}/{identifier}.wav',
-                               codec='pcm_s16le', ffmpeg_params=["-ac", "1", "-ar", "44100"])
+    path = f'tmp/{session_id}/audios/{identifier}.wav'
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    clip.audio.write_audiofile(path, codec='pcm_s16le', ffmpeg_params=["-ac", "1", "-ar", "44100"])
+
+    return path
+
 
 def save_audio(session_id, audio_file, name):
-    with open("tmp/{}/audio/{}{}.wav".format(session_id,name), "wb") as binary_file:
+    path = "tmp/{}/audios/{}.wav".format(session_id, name)
+    with safe_open(path, 'wb') as binary_file:
         binary_file.write(audio_file)
+    return path
 
 
 def analyze_audio(identifier):
