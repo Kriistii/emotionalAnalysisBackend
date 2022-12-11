@@ -6,6 +6,9 @@ import filetype
 
 class ChatConsumer(AsyncJsonWebsocketConsumer):
     async def connect(self):
+        employee_id = self.scope['url_route']['kwargs']['employee_id']
+        self.scope["session"]['session_id'] = uuid.uuid4()
+        #Create the session
         await self.accept()
 
     def disconnect(self, close_code):
@@ -22,7 +25,6 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                 await self.send(json.dumps({"answer_chatbot": answer, "question": message['data'], "type": 'text'}))
             if bytes_data:
                 kind = filetype.guess(bytes_data)
-                print(kind.extension)
                 if kind.extension == 'wav':
                     audio_file = bytes_data
                     audio.save_audio(audio_file, name)
