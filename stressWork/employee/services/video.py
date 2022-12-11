@@ -9,6 +9,21 @@ import cv2
 import os
 import shutil
 from ..utilityFunctions import *
+from ..models import ChatSessionMessage, ChatSession
+from moviepy.editor import *
+
+
+def create_merged_video(session_id):
+    messages = ChatSessionMessage(session=ChatSession(pk=session_id)).order_by('date')
+    videos = []
+    for message in messages:
+        videos.append(VideoClip(message.video_url))
+    final = concatenate_videoclips(videos)
+    path = 'tmp/{}/videos/full_video.webm'.format(session_id)
+    final.write_videofile(path)
+    return path
+        
+
 
 def save_video(session_id, video_file, name):
     path = 'tmp/{}/videos/{}.webm'.format(session_id, name)

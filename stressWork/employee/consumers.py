@@ -17,10 +17,9 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         await self.accept()
 
     def disconnect(self, close_code):
-        employee_id = self.scope['url_route']['kwargs']['employee_id']
         session = self.scope["session"]
         chat_session_id = session['session_id']
-
+        video_path = video.create_merged_video()
         pass
 
     async def receive(self, text_data=None, bytes_data=None, **kwargs):
