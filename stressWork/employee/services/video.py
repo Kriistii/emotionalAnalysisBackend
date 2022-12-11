@@ -27,6 +27,10 @@ def mergeVideo(session_id):
             final = concatenate_videoclips(videos)
             path = 'tmp/{}/full_video.webm'.format(session_id)
             final.write_videofile(path)
+
+            chat_session = ChatSession.objects.get(pk=session_id)
+            chat_session.full_video_path = path
+            chat_session.save()
             return path
     else:
         return None

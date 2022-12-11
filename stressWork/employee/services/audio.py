@@ -49,8 +49,7 @@ def save_audio(session_id, audio_file, name):
     return path
 
 
-def analyze_audio(identifier):
-    audio_path = default_storage.path('tmp/audios/{}.wav'.format(identifier))
+def analyze_audio(audio_path):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model_name_or_path = default_storage.path('content/model/pretrained-model')
     config = AutoConfig.from_pretrained(
@@ -74,17 +73,20 @@ def analyze_audio(identifier):
         with torch.no_grad():
             logits = model(input_values, attention_mask=attention_mask).logits
         scores = F.softmax(logits, dim=1).detach().cpu().numpy()[0]
-        outputs = [{"Emotion": config.id2label[i], "Score": f"{round(score * 100, 3):.1f}%"} for i, score in
+        outputs = [{"Emotion": config.id2label[i], "Score": f"{round(score * 100, 3):.1f}"} for i, score in
                    enumerate(scores)]
         return outputs
 
     def prediction(path):
         outputs = predict(path, 16000)
-        print(outputs)
         r = pd.DataFrame(outputs)
-        print(r.to_string())
+        r = r.astype({'Score': 'float'})
+        r.sort_values(['Score'], ascending=False, inplace=True)
+        r_top_2 = r.iloc[:2]
+        return r_top_2['Emotion'].tolist()
 
-    prediction(audio_path)
+    result = prediction(audio_path)
+    return result
 
 
 @dataclass
@@ -197,8 +199,9 @@ class Wav2Vec2ForSpeechClassification(Wav2Vec2PreTrainedModel):
 
 
 @sync_to_async
-def mergeAudio(chat_session_id):
-    messages = ChatSessionMessageSerializer(ChatSessionMessage.objects.filter(session=ChatSession(pk=chat_session_id)).order_by('date'), many=True).data
+def mergeAndAnalyzeAudio(chat_session_id):
+    messages = ChatSessionMessageSerializer(
+        ChatSessionMessage.objects.filter(session=ChatSession(pk=chat_session_id)).order_by('date'), many=True).data
     if len(messages):
         audios = []
         for message in messages:
@@ -207,6 +210,14 @@ def mergeAudio(chat_session_id):
         if len(audios):
             final = concatenate_audioclips(audios)
             path = 'tmp/{}/full_audio.wav'.format(chat_session_id)
-            final.write_audiofile(path)
+            final.write_audiofile(path, codec='pcm_s16le', ffmpeg_params=["-ac", "1", "-ar", "44100"])
+
+            chat_session = ChatSession.objects.get(pk=chat_session_id)
+            chat_session.full_audio_path = path
+            chat_session.save()
+
+            analysis_results = analyze_audio(path)
+
+            return analysis_results
     else:
         return None
