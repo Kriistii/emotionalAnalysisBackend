@@ -3,6 +3,7 @@ from django import db
 from django.contrib.auth.models import AbstractBaseUser
 from django.contrib.auth.models import PermissionsMixin
 from .managers import CustomUserManager
+import uuid
 
 class Company(models.Model):
     class Meta:
@@ -70,13 +71,14 @@ class ChatSession(models.Model):
     class Meta:
         db_table = 'chat_session'
 
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     employee = models.ForeignKey("Employee", on_delete=models.CASCADE)
     date = models.DateTimeField()
-    first_prevailing_emotion = models.ForeignKey("Emotion", related_name="first_prevailing_emotion",                                       on_delete=models.DO_NOTHING)
-    second_prevailing_emotion = models.ForeignKey("Emotion", related_name="second_prevailing_emotion",                                            on_delete=models.DO_NOTHING)
-    full_video_path = models.CharField(max_length=50)
-    full_audio_path = models.CharField(max_length=50)
-    full_conversation_path = models.TextField()
+    first_prevailing_emotion = models.ForeignKey("Emotion", related_name="first_prevailing_emotion", null=True, on_delete=models.DO_NOTHING)
+    second_prevailing_emotion = models.ForeignKey("Emotion", related_name="second_prevailing_emotion",null=True, on_delete=models.DO_NOTHING)
+    full_video_path = models.CharField(max_length=50, null=True)
+    full_audio_path = models.CharField(max_length=50, null=True)
+    full_conversation_path = models.TextField(max_length=50, null=True)
 
     def __str__(self) -> str:
         return f"{self.employee + ' date:' + self.date}"

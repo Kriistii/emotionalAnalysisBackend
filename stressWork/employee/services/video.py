@@ -9,8 +9,8 @@ import cv2
 import os
 import shutil
 
-def save_video(video_file, name):
-    with open('tmp/videos/{}.webm'.format(name), "wb") as binary_file:
+def save_video(session_id, video_file, name):
+    with open('tmp/{}/video/{}.webm'.format(session_id, name), "wb") as binary_file:
         binary_file.write(video_file)
 
 def analyze_video(identifier):

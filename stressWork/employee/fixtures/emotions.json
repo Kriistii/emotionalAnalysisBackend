@@ -1,0 +1,40 @@
+[
+    {
+        "model" : "employee.Emotion",
+        "pk" : 1,
+        "fields" : {
+            "emotion_name" : "Anger"
+        }
+    },
+    {
+        "model" : "employee.Emotion",
+        "pk" : 2,
+        "fields" : {
+            "emotion_name" : "Disgust"
+        }
+    },{
+        "model" : "employee.Emotion",
+        "pk" : 3,
+        "fields" : {
+            "emotion_name" : "Fear"
+        }
+    },{
+        "model" : "employee.Emotion",
+        "pk" : 4,
+        "fields" : {
+            "emotion_name" : "Happiness"
+        }
+    },{
+        "model" : "employee.Emotion",
+        "pk" : 5,
+        "fields" : {
+            "emotion_name" : "Sadness"
+        }
+    },{
+        "model" : "employee.Emotion",
+        "pk" : 6,
+        "fields" : {
+            "emotion_name" : "Surprise"
+        }
+    }
+]

@@ -32,8 +32,8 @@ def video_to_audio(identifier):
     clip.audio.write_audiofile(f'{audio_folder_path}/{identifier}.wav',
                                codec='pcm_s16le', ffmpeg_params=["-ac", "1", "-ar", "44100"])
 
-def save_audio(audio_file, name):
-    with open("tmp/audios/{}.wav".format(name), "wb") as binary_file:
+def save_audio(session_id, audio_file, name):
+    with open("tmp/{}/audio/{}{}.wav".format(session_id,name), "wb") as binary_file:
         binary_file.write(audio_file)
 
 
