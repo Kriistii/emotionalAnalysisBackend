@@ -38,8 +38,11 @@ CSRF_TRUSTED_ORIGINS = ["http://localhost:8080","http://localhost:8081" ]
 CORS_ALLOW_CREDENTIALS= True
 # Application definition
 
+ASGI_APPLICATION = "stressWork.asgi.application"
 
 INSTALLED_APPS = [
+    "daphne",
+    "employee",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -48,12 +51,13 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "rest_framework",
     "corsheaders",
-    "employee",
     "django_apscheduler",
     "dj_rest_auth",
     "fcm_django",
     "rest_framework.authtoken"
 ]
+
+
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
@@ -93,7 +97,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = "stressWork.wsgi.application"
+
 
 
 # Database

@@ -7,4 +7,5 @@ class EmployeeConfig(AppConfig):
 
     def ready(self):
         from . import scheduler
-        scheduler.start()
+        print("Starto scheduler...")
+        scheduler.startScheduler()

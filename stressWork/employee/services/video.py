@@ -8,70 +8,91 @@ import subprocess
 import cv2
 import os
 import shutil
+from ..utilityFunctions import *
+from ..models import ChatSessionMessage, ChatSession
+from ..serializers import ChatSessionMessageSerializer
+from moviepy.editor import *
+from asgiref.sync import sync_to_async
 
-def save_video(video_file, name):
-    default_storage.save(
-                'tmp/videos/{}.webm'.format(name), ContentFile(video_file.read()))
+
+def mergeAndAnalyzeVideo(session_id):
+    messages = ChatSessionMessageSerializer(ChatSessionMessage.objects.filter(session=ChatSession(pk=session_id)).order_by('date'), many=True).data
+    if len(messages):
+        videos = []
+        for message in messages:
+            if message['video_url'] is not None:
+                videos.append(VideoFileClip(message['video_url']))
+        if len(videos):
+            final = concatenate_videoclips(videos)
+            path = 'tmp/{}/full_video.webm'.format(session_id)
+            final.write_videofile(path)
+
+            chat_session = ChatSession.objects.get(pk=session_id)
+            chat_session.full_video_path = path
+            chat_session.save()
+            analyze_video(session_id)
+    else:
+        return None
+
+
+def save_video(session_id, video_file, name):
+    path = 'tmp/{}/videos/{}.webm'.format(session_id, name)
+    with safe_open(path, 'wb') as binary_file:
+        binary_file.write(video_file)
+    return path
+
 
 def analyze_video(identifier):
-    #get paths, for video processing
-    video_path = default_storage.path('tmp/videos/{}.mov'.format(identifier))
+    # get paths, for video processing
+    print("Ciao")
+    video_path = default_storage.path('tmp/{}/full_video.webm'.format(identifier))
     openface_path = default_storage.path('OpenFace')
-    employeeId = 1 #todo get key form token or add uuid
-    csv_path = default_storage.path(f'tmp/csv/{employeeId}')
-    os.mkdir(csv_path)
-    string = '\\stressWork\\'
-    splitResult = openface_path.split(string)
-    final_openface_path = splitResult[0] + '\\' + splitResult[1]
-    #mac_add = '/build/bin/' add this to path when running it in mac
+    csv_path = default_storage.path(f'tmp/{identifier}/csv')
+    os.makedirs(os.path.dirname(csv_path), exist_ok=True)
 
-    #get video duration
-    video = cv2.VideoCapture(video_path)
-    frame_count = video.get(cv2.CAP_PROP_FRAME_COUNT)
-    fps = video.get(cv2.CAP_PROP_FPS) 
-    duration = frame_count / fps
+    string = '/stressWork/'
+    splitResult = openface_path.split(string)
+    print(splitResult)
+    mac_add = '/build/bin' #add this to path when running it in mac
+    final_openface_path = splitResult[0] + '/' + splitResult[1] + mac_add
+
+    video = VideoFileClip(video_path)
+    duration = video.duration
 
 
     start = 0
-    #create dir to store all 1s videos
-    os.mkdir(default_storage.path('tmp/videos/{}'.format(identifier)))
-    while(duration > 1):
+    # create dir to store all 1s videos
+    while (duration > 1):
         end = start + 1
-        #create duration slots
-        if(start < 10):
-            startString = "0" + str(start)
-        else :
-            startString = str(start)
-        
-        if(end < 10):
-            endString = "0" + str(end)
-        else :
-            endString = str(end)
 
         duration = duration - 1
-        outputPath = default_storage.path('tmp/videos/{}/{}.mov'.format(identifier,end))
-        #split video in 1s videos
-        subprocess.run(f" ffmpeg -i {video_path} -ss  00:00:{startString} -to  00:00:{endString} -c copy {outputPath}", shell=True)
-        #run video analysis for each video
-        subprocess.call(f' {final_openface_path}/FeatureExtraction -f {outputPath} -aus -out_dir {csv_path} ',
-        shell=True)
+        path_video = f'tmp/{identifier}/tmp_videos/{end}.webm'
+        os.makedirs(os.path.dirname(path_video), exist_ok=True)
+        clip = video.subclip(start, end)
+        clip.write_videofile(path_video)
+        # split video in 1s videos
+        # subprocess.run(f" ffmpeg -i {video_path} -ss  00:00:{startString} -to  00:00:{endString} -c copy {path_video}", shell=True)
+        # run video analysis for each video
+        subprocess.call(f' {final_openface_path}/FeatureExtraction -f {path_video} -aus -out_dir {csv_path} ',
+                        shell=True)
 
-        #emotion analysis
-        mostCommonUnits = csvProcessing2(end)
+        # emotion analysis
+        mostCommonUnits = csvProcessing2(identifier, end)
         emotionsPointsDataFrame = findEmotionsPerFrame2(mostCommonUnits)
-        sumEmotionsAndSaveCsv(emotionsPointsDataFrame)
+        sumEmotionsAndSaveCsv(emotionsPointsDataFrame, identifier)
         start = end
-    
-    sessionResultsProcessing()
-    #delete videos, todo delete all csvs, leave only the main one
-    shutil.rmtree(default_storage.path('tmp/videos/{}'.format(identifier)))
-    shutil.rmtree(default_storage.path('tmp/csv/{}'.format(employeeId)))
-    return 1
-    
 
-def csvProcessing2(identifier):
-    employeeId = 1
-    with open(default_storage.path('tmp/csv/{}/{}.csv'.format(employeeId, identifier))) as file:
+    sessionResultsProcessing(identifier)
+    # delete videos, todo delete all csvs, leave only the main one
+    shutil.rmtree(default_storage.path('tmp/{}/tmp_videos'.format(identifier)))
+    shutil.rmtree(default_storage.path('tmp/{}/csv'.format(identifier)))
+
+    start = end
+    return 1
+
+
+def csvProcessing2(session_id, csv_name):
+    with open(default_storage.path('tmp/{}/csv/{}.csv'.format(session_id, csv_name))) as file:
         fullFinal = []
         headArray = []
         reader = csv.reader(file)
@@ -81,7 +102,7 @@ def csvProcessing2(identifier):
                 for element1 in row:
                     if ("_r" in element1):
                         # save units to head array (only the unit number)
-                        headArray.append(element1[3:5])
+                        headArray.append(element1[2:4])
                 fullFinal.append(headArray)
             else:
                 for index, element in enumerate(row):
@@ -91,6 +112,7 @@ def csvProcessing2(identifier):
                 fullFinal.append(final)
     # full final has the best predicted fus
     return fullFinal
+
 
 def findEmotionsPerFrame2(fuArrayFrames):
     # fu for emotions
@@ -157,51 +179,43 @@ def findEmotionsPerFrame2(fuArrayFrames):
     finalEmotionPointsDf = pd.DataFrame(finalEmotionPoints)
     return finalEmotionPointsDf
 
-def sumEmotionsAndSaveCsv(finalEmotionPointsDf):
+
+def sumEmotionsAndSaveCsv(finalEmotionPointsDf, session_id):
     # aggregate dataframe by sum of all values
     sumAllEmotions = finalEmotionPointsDf.agg(['sum'])
     # to dict because we cant sort a dataframe after aggregation
     emotionsDict = sumAllEmotions.to_dict('list')
 
-
     for emotion, sum in emotionsDict.items():
         emotionsDict[emotion] = sum[0]
-        
-    saveResultToCsv(emotionsDict)
-    
-    # sort descendand to find 2 dominant ones
-    #sortedEmotions = sorted(emotionsDict.items(), key=lambda x:x[1], reverse=True)
 
-    #twoDominant = []
-    #twoDominant.append(sortedEmotions[0][0])
-    #twoDominant.append(sortedEmotions[1][0])
+    saveResultToCsv(emotionsDict, session_id)
     return 1
 
-def saveResultToCsv(emotionsDict):
-    #save result to a file
-    employeeId = 1 #todo get authenticated user id, or set uniqueid idk
-    dirPath = default_storage.path('tmp/csv/emotionAnalysis')
-    if(not os.path.exists(dirPath)):
+
+def saveResultToCsv(emotionsDict, session_id):
+    # save result to a file
+    dirPath = default_storage.path(f'tmp/{session_id}')
+    if (not os.path.exists(dirPath)):
         os.mkdir(dirPath)
 
-    csvPath = dirPath + f"/{employeeId}.csv"
-    if(exists(csvPath)):
+    csvPath = dirPath + "/video_analysis.csv"
+    if (exists(csvPath)):
         with open(csvPath, 'a') as csvFile:
-             writer = csv.writer(csvFile)
-             writer.writerow([emotionsDict['anger'], emotionsDict['disgust'], emotionsDict['fear'],
-                    emotionsDict['happiness'], emotionsDict['sadness'], emotionsDict['surprise']])
+            writer = csv.writer(csvFile)
+            writer.writerow([emotionsDict['anger'], emotionsDict['disgust'], emotionsDict['fear'],
+                             emotionsDict['happiness'], emotionsDict['sadness'], emotionsDict['surprise']])
     else:
         with open(csvPath, 'a+') as csvFile:
-             writer = csv.writer(csvFile)
-             writer.writerow(['anger', 'disgust', 'fear', 'happiness', 'sadness', 'surprise'])
-             writer.writerow([emotionsDict['anger'], emotionsDict['disgust'], emotionsDict['fear'],
-                    emotionsDict['happiness'], emotionsDict['sadness'], emotionsDict['surprise']])
+            writer = csv.writer(csvFile)
+            writer.writerow(['anger', 'disgust', 'fear', 'happiness', 'sadness', 'surprise'])
+            writer.writerow([emotionsDict['anger'], emotionsDict['disgust'], emotionsDict['fear'],
+                             emotionsDict['happiness'], emotionsDict['sadness'], emotionsDict['surprise']])
     return 1
 
 
-def sessionResultsProcessing():
-    employeeId = 1 #todo get authenticated user id, or set uniqueid idk
-    finalCsvPath = default_storage.path(f'tmp/csv/emotionAnalysis/{employeeId}.csv')
+def sessionResultsProcessing(session_id):
+    finalCsvPath = default_storage.path(f'tmp/{session_id}/video_analysis.csv')
     with open(finalCsvPath, 'r') as file:
         reader = csv.reader(file)
         emotionsArray = []
@@ -210,14 +224,19 @@ def sessionResultsProcessing():
             if (i == 0):
                 for element in row:
                     emotionsArray.append(element)
-                    emotionsValues[element]=0
+                    emotionsValues[element] = 0
             else:
                 for key, element1 in enumerate(row):
-                    if(key < len(emotionsArray)):
+                    if (key < len(emotionsArray)):
                         emotionsValues[emotionsArray[key]] = emotionsValues[emotionsArray[key]] + float(element1)
     valueSum = sum(emotionsValues.values())
     normalizedValues = dict()
     for key, i in emotionsValues.items():
-        normalizedValues[key] = round(i * 100/ valueSum, 2) 
-    print(normalizedValues)
+        normalizedValues[key] = round(i * 100 / valueSum, 2)
+    # sort descendand to find 2 dominant ones
+    sortedEmotions = sorted(normalizedValues.items(), key=lambda x:x[1], reverse=True)
+    dominant = []
+    dominant.append(sortedEmotions[0][0])
+    dominant.append(sortedEmotions[1][0])
+    print(dominant)
     return 1

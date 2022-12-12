@@ -11,7 +11,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 
-web_model = WebBertSimilarity(device='cpu', batch_size=10)
+#web_model = WebBertSimilarity(device='cpu', batch_size=10)
 from django.contrib.auth.hashers import make_password
 
 class EmployeeStatsAPIView(APIView):
@@ -194,7 +194,8 @@ class NewRecordAPIView(APIView):
         if request.session.get('topicAnswer', None):
             topic = request.session['topic']
             # TODO Analyz the answer wrt of the topic and save the answer in the database
-            predict = web_model.predict([(topic['name'], text)])
+            #predict = web_model.predict([(topic['name'], text)])
+            predict = 1
             if predict <= 1:
                 response = Response(
                     {"answer_chatbot": "Please answer to the question I made to you in a clear way.", "question": text})
@@ -252,12 +253,10 @@ class CreateEmployeeAPIView(APIView):
         employee.save()
         return Response("Ok")
 
-
-
 class TestVideoAnalysisAPIView(APIView):
     #todo request filter
     def get(self, request):
-        name = 'happy'
+        name = 1
         video.analyze_video(name)
         return Response("Ok")
 

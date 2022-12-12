@@ -15,29 +15,41 @@ from torch.nn import BCEWithLogitsLoss, CrossEntropyLoss, MSELoss
 from typing import Optional, Tuple
 from transformers.file_utils import ModelOutput
 from dataclasses import dataclass
-from django.core.files.base import ContentFile
+import os
+from ..utilityFunctions import safe_open
+from ..models import ChatSessionMessage, ChatSession
+from ..serializers import ChatSessionMessageSerializer
+from moviepy.editor import *
+from asgiref.sync import sync_to_async
 
-def speech_to_text(identifier):
-    audio_path = default_storage.path("tmp/audios/{}.wav".format(identifier))
+
+def speech_to_text(session_id, identifier):
+    audio_path = default_storage.path("tmp/{}/audios/{}.wav".format(session_id, identifier))
     recognizer = sr.Recognizer()
     with sr.AudioFile(audio_path) as source:
         audio_data = recognizer.record(source)
         text = recognizer.recognize_google(audio_data)
         return text.lower()
 
-def video_to_audio(identifier):
-    video_path = default_storage.path("tmp/videos/{}.webm".format(identifier))
+
+def video_to_audio(session_id, identifier):
+    video_path = default_storage.path("tmp/{}/videos/{}.webm".format(session_id, identifier))
     clip = mp.VideoFileClip(r'{}'.format(video_path))
-    audio_folder_path = default_storage.path("tmp/audios/")
-    clip.audio.write_audiofile(f'{audio_folder_path}/{identifier}.wav',
-                               codec='pcm_s16le', ffmpeg_params=["-ac", "1", "-ar", "44100"])
+    path = f'tmp/{session_id}/audios/{identifier}.wav'
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    clip.audio.write_audiofile(path, codec='pcm_s16le', ffmpeg_params=["-ac", "1", "-ar", "44100"])
 
-def save_audio(audio_file, name):
-    default_storage.save('tmp/audios/{}.wav'.format(name), ContentFile(audio_file.read()))
+    return path
 
 
-def analyze_audio(identifier):
-    audio_path = default_storage.path('tmp/audios/{}.wav'.format(identifier))
+def save_audio(session_id, audio_file, name):
+    path = "tmp/{}/audios/{}.wav".format(session_id, name)
+    with safe_open(path, 'wb') as binary_file:
+        binary_file.write(audio_file)
+    return path
+
+
+def analyze_audio(audio_path):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model_name_or_path = default_storage.path('content/model/pretrained-model')
     config = AutoConfig.from_pretrained(
@@ -61,16 +73,21 @@ def analyze_audio(identifier):
         with torch.no_grad():
             logits = model(input_values, attention_mask=attention_mask).logits
         scores = F.softmax(logits, dim=1).detach().cpu().numpy()[0]
-        outputs = [{"Emotion": config.id2label[i], "Score": f"{round(score * 100, 3):.1f}%"} for i, score in enumerate(scores)]
+        outputs = [{"Emotion": config.id2label[i], "Score": f"{round(score * 100, 3):.1f}"} for i, score in
+                   enumerate(scores)]
         return outputs
 
     def prediction(path):
         outputs = predict(path, 16000)
-        print(outputs)
         r = pd.DataFrame(outputs)
-        print(r.to_string())
+        r = r.astype({'Score': 'float'})
+        r.sort_values(['Score'], ascending=False, inplace=True)
+        r_top_2 = r.iloc[:2]
+        return r_top_2['Emotion'].tolist()
 
-    prediction(audio_path)
+    result = prediction(audio_path)
+    return result
+
 
 @dataclass
 class SpeechClassifierOutput(ModelOutput):
@@ -180,3 +197,27 @@ class Wav2Vec2ForSpeechClassification(Wav2Vec2PreTrainedModel):
             attentions=outputs.attentions,
         )
 
+
+
+def mergeAndAnalyzeAudio(chat_session_id):
+    messages = ChatSessionMessageSerializer(
+        ChatSessionMessage.objects.filter(session=ChatSession(pk=chat_session_id)).order_by('date'), many=True).data
+    if len(messages):
+        audios = []
+        for message in messages:
+            if message['audio_url'] is not None:
+                audios.append(AudioFileClip(message['audio_url']))
+        if len(audios):
+            final = concatenate_audioclips(audios)
+            path = 'tmp/{}/full_audio.wav'.format(chat_session_id)
+            final.write_audiofile(path, codec='pcm_s16le', ffmpeg_params=["-ac", "1", "-ar", "44100"])
+
+            chat_session = ChatSession.objects.get(pk=chat_session_id)
+            chat_session.full_audio_path = path
+            chat_session.save()
+
+            analysis_results = analyze_audio(path)
+
+            return analysis_results
+    else:
+        return None
