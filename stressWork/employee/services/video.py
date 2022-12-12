@@ -15,7 +15,6 @@ from moviepy.editor import *
 from asgiref.sync import sync_to_async
 
 
-@sync_to_async
 def mergeAndAnalyzeVideo(session_id):
     messages = ChatSessionMessageSerializer(ChatSessionMessage.objects.filter(session=ChatSession(pk=session_id)).order_by('date'), many=True).data
     if len(messages):
@@ -31,7 +30,7 @@ def mergeAndAnalyzeVideo(session_id):
             chat_session = ChatSession.objects.get(pk=session_id)
             chat_session.full_video_path = path
             chat_session.save()
-        analyze_video(session_id)
+            analyze_video(session_id)
     else:
         return None
 
@@ -45,44 +44,36 @@ def save_video(session_id, video_file, name):
 
 def analyze_video(identifier):
     # get paths, for video processing
+    print("Ciao")
     video_path = default_storage.path('tmp/{}/full_video.webm'.format(identifier))
     openface_path = default_storage.path('OpenFace')
     csv_path = default_storage.path(f'tmp/{identifier}/csv')
     os.makedirs(os.path.dirname(csv_path), exist_ok=True)
-    string = '\\stressWork\\'
-    splitResult = openface_path.split(string)
-    final_openface_path = splitResult[0] + '\\' + splitResult[1]
-    # mac_add = '/build/bin/' add this to path when running it in mac
 
-    # get video duration
-    video = cv2.VideoCapture(video_path)
-    frame_count = video.get(cv2.CAP_PROP_FRAME_COUNT)
-    fps = video.get(cv2.CAP_PROP_FPS)
-    duration = frame_count / fps
+    string = '/stressWork/'
+    splitResult = openface_path.split(string)
+    print(splitResult)
+    mac_add = '/build/bin' #add this to path when running it in mac
+    final_openface_path = splitResult[0] + '/' + splitResult[1] + mac_add
+
+    video = VideoFileClip(video_path)
+    duration = video.duration
+
 
     start = 0
     # create dir to store all 1s videos
-    os.makedirs(os.path.dirname('tmp/{}/tmp_videos'.format(identifier)), exist_ok=True)
     while (duration > 1):
         end = start + 1
-        # create duration slots
-        if (start < 10):
-            startString = "0" + str(start)
-        else:
-            startString = str(start)
-
-        if (end < 10):
-            endString = "0" + str(end)
-        else:
-            endString = str(end)
 
         duration = duration - 1
-        outputPath = default_storage.path('tmp/{}/tmp_videos/{}.mov'.format(identifier, end))
+        path_video = f'tmp/{identifier}/tmp_videos/{end}.webm'
+        os.makedirs(os.path.dirname(path_video), exist_ok=True)
+        clip = video.subclip(start, end)
+        clip.write_videofile(path_video)
         # split video in 1s videos
-        subprocess.run(f" ffmpeg -i {video_path} -ss  00:00:{startString} -to  00:00:{endString} -c copy {outputPath}",
-                       shell=True)
+        # subprocess.run(f" ffmpeg -i {video_path} -ss  00:00:{startString} -to  00:00:{endString} -c copy {path_video}", shell=True)
         # run video analysis for each video
-        subprocess.call(f' {final_openface_path}/FeatureExtraction -f {outputPath} -aus -out_dir {csv_path} ',
+        subprocess.call(f' {final_openface_path}/FeatureExtraction -f {path_video} -aus -out_dir {csv_path} ',
                         shell=True)
 
         # emotion analysis
@@ -91,10 +82,12 @@ def analyze_video(identifier):
         sumEmotionsAndSaveCsv(emotionsPointsDataFrame, identifier)
         start = end
 
-    sessionResultsProcessing()
+    sessionResultsProcessing(identifier)
     # delete videos, todo delete all csvs, leave only the main one
     shutil.rmtree(default_storage.path('tmp/{}/tmp_videos'.format(identifier)))
     shutil.rmtree(default_storage.path('tmp/{}/csv'.format(identifier)))
+
+    start = end
     return 1
 
 
@@ -109,7 +102,7 @@ def csvProcessing2(session_id, csv_name):
                 for element1 in row:
                     if ("_r" in element1):
                         # save units to head array (only the unit number)
-                        headArray.append(element1[3:5])
+                        headArray.append(element1[2:4])
                 fullFinal.append(headArray)
             else:
                 for index, element in enumerate(row):
@@ -206,7 +199,7 @@ def saveResultToCsv(emotionsDict, session_id):
     if (not os.path.exists(dirPath)):
         os.mkdir(dirPath)
 
-    csvPath = dirPath + f"/video_analysis.csv"
+    csvPath = dirPath + "/video_analysis.csv"
     if (exists(csvPath)):
         with open(csvPath, 'a') as csvFile:
             writer = csv.writer(csvFile)
@@ -221,9 +214,8 @@ def saveResultToCsv(emotionsDict, session_id):
     return 1
 
 
-def sessionResultsProcessing():
-    employeeId = 1  # todo get authenticated user id, or set uniqueid idk
-    finalCsvPath = default_storage.path(f'tmp/csv/emotionAnalysis/{employeeId}.csv')
+def sessionResultsProcessing(session_id):
+    finalCsvPath = default_storage.path(f'tmp/{session_id}/video_analysis.csv')
     with open(finalCsvPath, 'r') as file:
         reader = csv.reader(file)
         emotionsArray = []
@@ -246,4 +238,5 @@ def sessionResultsProcessing():
     dominant = []
     dominant.append(sortedEmotions[0][0])
     dominant.append(sortedEmotions[1][0])
+    print(dominant)
     return 1

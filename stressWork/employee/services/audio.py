@@ -198,7 +198,7 @@ class Wav2Vec2ForSpeechClassification(Wav2Vec2PreTrainedModel):
         )
 
 
-@sync_to_async
+
 def mergeAndAnalyzeAudio(chat_session_id):
     messages = ChatSessionMessageSerializer(
         ChatSessionMessage.objects.filter(session=ChatSession(pk=chat_session_id)).order_by('date'), many=True).data

@@ -19,8 +19,6 @@ def analyzeText(text):
     return r.iloc[:2]
 
 
-
-@sync_to_async
 def mergeAndAnalyzeText(chat_session_id):
     session_messages = ChatSessionMessage.objects.filter(session=ChatSession(pk=chat_session_id)).order_by("date")
     if len(session_messages):

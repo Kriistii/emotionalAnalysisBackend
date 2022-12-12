@@ -19,9 +19,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
     async def disconnect(self, close_code):
         session = self.scope["session"]
         chat_session_id = session['session_id']
-        text_analysis_results = await text_service.mergeAndAnalyzeText(chat_session_id)
-        audio_analysis_results = await audio.mergeAndAnalyzeAudio(chat_session_id)
-        video_analysis_results = await video.mergeAndAnalyzeVideo(chat_session_id)
+        await chat.completeChat(chat_session_id)
         # todo Delete all the chatSessionMessages
         # TODO run the analysis inside the functions (video) and then compare the results and save it to the db
         pass

@@ -90,14 +90,16 @@ class ChatSession(models.Model):
                                                  on_delete=models.DO_NOTHING)
     second_prevailing_emotion = models.ForeignKey("Emotion", related_name="second_prevailing_emotion", null=True,
                                                   on_delete=models.DO_NOTHING)
-    full_video_path = models.CharField(max_length=50, null=True)
-    full_audio_path = models.CharField(max_length=50, null=True)
-    full_conversation_path = models.TextField(max_length=50, null=True)
+    full_video_path = models.CharField(max_length=200, null=True)
+    full_audio_path = models.CharField(max_length=200, null=True)
+    full_conversation_path = models.TextField(null=True)
+    analyzed = models.BooleanField(default=False)
+    completed = models.BooleanField(default=False)
 
     objects = models.Manager()
 
     def __str__(self) -> str:
-        return f"{self.employee + ' date:' + str(self.date)}"
+        return f"{'id:' + str(self.id) + ' date:' + str(self.date) + ' first_prevailing_emotion:' + str(self.first_prevailing_emotion) +' second_prevailing_emotion:' + str(self.second_prevailing_emotion) + ' analyzed:' + str(self.analyzed)}   "
 
 
 class ChatSessionMessage(models.Model):

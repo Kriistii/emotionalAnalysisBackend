@@ -15,3 +15,11 @@ def createChatSessionMessage(session_id, text, answer, audio, video):
                                  chatbot_answer=answer, date=datetime.now(), audio_url=audio,
                                  video_url=video)
     message.save()
+
+
+@sync_to_async
+def completeChat(session_id):
+
+    chatSession = ChatSession.objects.get(pk=session_id)
+    chatSession.completed = True
+    chatSession.save()
