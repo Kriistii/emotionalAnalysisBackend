@@ -5,13 +5,13 @@ from dj_rest_auth.serializers import UserDetailsSerializer
 class EmployeeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Employee
-        fields = ['id', 'name', 'surname', 'birthday', 'company_id',  'coins']
+        fields = ['id', 'name', 'surname', 'birthday', 'company',  'coins']
 
 
 class EmployerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Employer
-        fields = ['id', 'name', 'surname', 'birthday', 'company_id']  # TODO: manage null errors
+        fields = ['id', 'name', 'surname', 'birthday', 'company', 'user']  # TODO: manage null errors
 
 
 class StressRecordSerializer(serializers.ModelSerializer):
@@ -35,7 +35,7 @@ class TopicSerializer(serializers.ModelSerializer):
 class PrizeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Prize
-        fields = ['id', 'name', 'description', 'rare', 'wheel_id']
+        fields = ['id', 'name', 'description', 'rare', 'wheel']
 
 
 class WheelSerializer(serializers.ModelSerializer):

@@ -23,8 +23,11 @@ newPrize = NewPrize.as_view()
 newWheel = NewWheel.as_view()
 
 delPrize = DelPrize.as_view()
+delWheel = DelWheel.as_view()
 
 editPrize = EditPrize.as_view()
+
+interactionSummary = GetInteractionSummary.as_view()
 
 urlpatterns = [
     path("", employee_api, name="employees"),
@@ -46,5 +49,7 @@ urlpatterns = [
     path("editPrize/<int:prize_id>", editPrize, name="editPrize"),
     path("getWheels", wheels, name="wheels"),
     path("newWheel", newWheel, name="newWheel"),
+    path("delWheel/<int:wheel_id>", delWheel, name="delWheel"),
+    path("getInteractionSummary", interactionSummary, name="interactionSummary"),
 ]
 

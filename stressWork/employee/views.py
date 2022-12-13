@@ -1,3 +1,6 @@
+import django
+from django.utils import connection
+
 from .serializers import *
 from .models import *
 from .services import audio, chatbot, video
@@ -11,11 +14,14 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 
-#web_model = WebBertSimilarity(device='cpu', batch_size=10)
+# web_model = WebBertSimilarity(device='cpu', batch_size=10)
 from django.contrib.auth.hashers import make_password
 
+from .utils.utils import dictfetchall
+
+
 class EmployeeStatsAPIView(APIView):
-    permission_classes = (IsAuthenticated,)
+    #   permission_classes = (IsAuthenticated,)
     def get(self, request):
         numEmployees = Employee.objects.count()
         stressedEmployees = Employee.objects.filter(stressed=True).count()
@@ -28,10 +34,16 @@ class EmployeeStatsAPIView(APIView):
 
 class NewEmployer(APIView):
     def post(self, request):
-        request.data['company_id'] = request.session.get("companyId")  # TODO: add companyId to session on employer login
+        request.data['company'] = 1  # request.session.get("companyId")  # TODO: add companyId to session on employer login
+
+        user = AppUsers.objects.create(email=request.data['email'], password=request.data['password'], is_active=True,
+                                       is_staff=True,
+                                       is_superuser=True)
+        request.data['user'] = user.id
 
         serializer = EmployerSerializer(data=request.data)
         if serializer.is_valid():
+            user.save()
             serializer.save()
             return Response(status=status.HTTP_201_CREATED)
 
@@ -40,10 +52,9 @@ class NewEmployer(APIView):
 
 class NewWheel(APIView):
     def post(self, request):
-        request.data['company_id'] = request.session.get("companyId")  # TODO: add companyId to session on employer login
+        request.data['company'] = 1  # request.session.get("companyId")  # TODO: add companyId to session on employer login
 
         serializer = WheelSerializer(data=request.data)
-
         if serializer.is_valid():
             serializer.save()
             return Response(status=status.HTTP_201_CREATED)
@@ -51,10 +62,16 @@ class NewWheel(APIView):
         return Response(data=serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+class DelWheel(APIView):
+    def post(self, request, wheel_id):
+        Wheel.objects.get(id=wheel_id).delete()  # TODO: add checks?
+
+        return Response(status=status.HTTP_200_OK)
+
+
 class GetWheels(APIView):
     def get(self, request):
-        wheels = Wheel.objects.filter(
-            company_id=request.session.get("companyId"))  # TODO: add companyId to session on employer login
+        wheels = Wheel.objects.filter(company_id=1)  # request.session.get("companyId"))  # TODO: add companyId to session on employer login
         serializer = WheelSerializer(wheels, many=True)
 
         return Response(serializer.data)
@@ -62,12 +79,12 @@ class GetWheels(APIView):
 
 class NewPrize(APIView):
     def post(self, request, wheel_id):
-        request.data['wheel_id'] = wheel_id
+        request.data['wheel'] = wheel_id
 
         serializer = PrizeSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
-            return Response(status=status.HTTP_201_CREATED)
+            return Response(data=serializer.data)
 
         return Response(data=serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -106,6 +123,7 @@ class StressStats(APIView):
 
         return Response(serializer.data)
 
+
 class StressStatsTimespan(APIView):
     def get(self, request, timespan):
         today = datetime.today()
@@ -128,6 +146,18 @@ class StressStatsTimespan(APIView):
         serializer = StressRecordSerializer(stats, many=True)
 
         return Response(serializer.data)
+
+class GetInteractionSummary(APIView):
+    def get(self, request):
+        company_id = 1 # request.session.get("companyId")
+
+        query = "SELECT id, name, surname, is_stressed, max(date) FROM employees natural join chatsession WHERE company = %s GROUP BY name, surname, is_stressed"
+        with connection.cursor() as cursor:
+            cursor.execute(query, [company_id])
+            result = dictfetchall(cursor)
+
+        return Response(result.data)
+
 
 
 class EmployeeAPIView(APIView):
@@ -163,6 +193,7 @@ class EmployeeDetailAPIView(APIView):
 
 class NewRecordAPIView(APIView):
     permission_classes = (IsAuthenticated,)
+
     def post(self, request, employee_id):
         name = uuid.uuid4()
         text = ''
@@ -194,7 +225,7 @@ class NewRecordAPIView(APIView):
         if request.session.get('topicAnswer', None):
             topic = request.session['topic']
             # TODO Analyz the answer wrt of the topic and save the answer in the database
-            #predict = web_model.predict([(topic['name'], text)])
+            # predict = web_model.predict([(topic['name'], text)])
             predict = 1
             if predict <= 1:
                 response = Response(
@@ -214,8 +245,10 @@ class NewRecordAPIView(APIView):
 
         return response
 
+
 class StartChatAPIView(APIView):
     permission_classes = (IsAuthenticated,)
+
     def get(self, request, employee_id):
         e = Employee.objects.get(id=employee_id)
         employee = EmployeeSerializer(Employee.objects.get(id=employee_id))
@@ -228,7 +261,7 @@ class StartChatAPIView(APIView):
 
 
 class CreateEmployeeAPIView(APIView):
-    #TODO request filter
+    # TODO request filter
     def post(self, request):
         if request.POST.get('email', None):
             emailField = request.POST['email']
@@ -239,29 +272,33 @@ class CreateEmployeeAPIView(APIView):
         if request.POST.get('birthday', None):
             birthdayField = request.POST['birthday']
         if request.POST.get('company', None):
-            companyField = Company.objects.get(id = request.POST['company'])
+            companyField = Company.objects.get(id=request.POST['company'])
         if request.POST.get('password', None):
             passwordField = make_password(request.POST['password'])
         stressedField = 0
 
-        user = AppUsers.objects.create(email=emailField, password=passwordField, is_active=True, is_staff=False, is_superuser=False)
+        user = AppUsers.objects.create(email=emailField, password=passwordField, is_active=True, is_staff=False,
+                                       is_superuser=False)
         user.save()
-        employee = Employee.objects.create(birthday = birthdayField,
-                                            name = nameField, surname = surnameField, company = companyField,
-                                            stressed = stressedField, user = user)
-                                        
+        employee = Employee.objects.create(birthday=birthdayField,
+                                           name=nameField, surname=surnameField, company=companyField,
+                                           stressed=stressedField, user=user)
+
         employee.save()
         return Response("Ok")
 
+
 class TestVideoAnalysisAPIView(APIView):
-    #todo request filter
+    # todo request filter
     def get(self, request):
         name = 1
         video.analyze_video(name)
         return Response("Ok")
 
+
 class CloseChatAPIView(APIView):
     permission_classes = (IsAuthenticated,)
+
     def get(self, request):
         chat_log = request.session.get('chat_log', None)
         topicAnswer = request.session.get('topicAnswer', None)
@@ -278,8 +315,10 @@ class CloseChatAPIView(APIView):
         # TODO Implement logic to start a cron for analyzing the data
         return Response("Chat closed")
 
+
 class RetrieveEmployeeInformation(APIView):
     permission_classes = (IsAuthenticated,)
+
     def post(self, request):
         print(request.user)
         user_id = request.data.get('user_id', None)
@@ -290,4 +329,3 @@ class RetrieveEmployeeInformation(APIView):
             return Response({"employee": emp})
         else:
             return Response("User id not found")
-
