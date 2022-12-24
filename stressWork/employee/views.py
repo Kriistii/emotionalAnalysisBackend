@@ -8,7 +8,7 @@ import uuid
 from datetime import datetime, timedelta
 from semantic_text_similarity.models import WebBertSimilarity
 
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, get_list_or_404
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -34,7 +34,8 @@ class EmployeeStatsAPIView(APIView):
 
 class NewEmployer(APIView):
     def post(self, request):
-        request.data['company'] = 1  # request.session.get("companyId")  # TODO: add companyId to session on employer login
+        request.data[
+            'company'] = 1  # request.session.get("companyId")  # TODO: add companyId to session on employer login
 
         user = AppUsers.objects.create(email=request.data['email'], password=request.data['password'], is_active=True,
                                        is_staff=True,
@@ -52,7 +53,8 @@ class NewEmployer(APIView):
 
 class NewWheel(APIView):
     def post(self, request):
-        request.data['company'] = 1  # request.session.get("companyId")  # TODO: add companyId to session on employer login
+        request.data[
+            'company'] = 1  # request.session.get("companyId")  # TODO: add companyId to session on employer login
 
         serializer = WheelSerializer(data=request.data)
         if serializer.is_valid():
@@ -71,7 +73,8 @@ class DelWheel(APIView):
 
 class GetWheels(APIView):
     def get(self, request):
-        wheels = Wheel.objects.filter(company_id=1)  # request.session.get("companyId"))  # TODO: add companyId to session on employer login
+        wheels = Wheel.objects.filter(
+            company_id=1)  # request.session.get("companyId"))  # TODO: add companyId to session on employer login
         serializer = WheelSerializer(wheels, many=True)
 
         return Response(serializer.data)
@@ -147,9 +150,10 @@ class StressStatsTimespan(APIView):
 
         return Response(serializer.data)
 
+
 class GetInteractionSummary(APIView):
     def get(self, request):
-        company_id = 1 # request.session.get("companyId")
+        company_id = 1  # request.session.get("companyId")
 
         query = "SELECT id, name, surname, is_stressed, max(date) FROM employees natural join chatsession WHERE company = %s GROUP BY name, surname, is_stressed"
         with connection.cursor() as cursor:
@@ -157,7 +161,6 @@ class GetInteractionSummary(APIView):
             result = dictfetchall(cursor)
 
         return Response(result.data)
-
 
 
 class EmployeeAPIView(APIView):
@@ -320,12 +323,44 @@ class RetrieveEmployeeInformation(APIView):
     permission_classes = (IsAuthenticated,)
 
     def post(self, request):
-        print(request.user)
         user_id = request.data.get('user_id', None)
-        print(user_id)
         if user_id is not None:
             emp = EmployeeSerializer(get_object_or_404(Employee, user=get_object_or_404(AppUsers, pk=user_id))).data
             print(emp['name'])
             return Response({"employee": emp})
         else:
             return Response("User id not found")
+
+
+class TimeChatOverEmployee(APIView):
+    permission_classes = (IsAuthenticated,)
+
+    def post(self, request):
+        user_id = request.data.get('user_id', None)
+        if user_id is not None:
+            today = datetime.today()
+
+            year = today.year
+            month = today.month
+            day = today.day
+            number_chats = ChatSessionSerializer(ChatSession.objects.filter(employee=get_object_or_404(Employee, pk=user_id), date__year=year,
+                                date__month=month, date__day=day, completed=True), many=True).data
+            print(len(number_chats))
+            if len(number_chats) >= 2:
+                return Response({"text1": "Congratulations, we just talked for 3 minutes! Unfortunately you already "
+                                          "got 2 coins today, so I can't give you another one. But I am really happy "
+                                          "that we talked again.", "text2": "You can now stop the chat or continue "
+                                                                            "talking with me!", "coin": False})
+            else:
+                employee = Employee.objects.get(pk=user_id)
+                employee.coins = employee.coins + 1
+                employee.save()
+                return Response({"text1": "Congratulations, we just talked for 3 minutes! I just added you one coin "
+                                          "to thank you for the time you spent talking with me. You will be able to "
+                                          "see it when the chat is over. "
+                                    , "text2": "You can now stop the chat or continue "
+                                               "talking with me!", "coin": True})
+
+
+        else:
+            return Response("User id not found", status=404)

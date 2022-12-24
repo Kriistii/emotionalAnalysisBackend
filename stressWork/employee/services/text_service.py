@@ -16,7 +16,8 @@ def safe_open_w(path):
 def analyzeText(text):
     r = pd.DataFrame.from_dict(te.get_emotion(text), orient='index')
     r.sort_values(r.columns[0], ascending=False, inplace=True)
-    return r.iloc[:2]
+    r_top_2 = r.iloc[:2]
+    return r_top_2.index.values.tolist()
 
 
 def mergeAndAnalyzeText(chat_session_id):

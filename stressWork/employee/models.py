@@ -47,6 +47,8 @@ class Employee(models.Model):
     user = models.ForeignKey("AppUsers", on_delete=models.CASCADE)
     coins = models.IntegerField(default=0)
 
+    objects = models.Manager()
+
     def __str__(self) -> str:
         return f"{self.name + ' ' + self.surname}"
 

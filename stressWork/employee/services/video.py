@@ -30,7 +30,8 @@ def mergeAndAnalyzeVideo(session_id):
             chat_session = ChatSession.objects.get(pk=session_id)
             chat_session.full_video_path = path
             chat_session.save()
-            analyze_video(session_id)
+            results = analyze_video(session_id)
+            return results
     else:
         return None
 
@@ -82,13 +83,13 @@ def analyze_video(identifier):
         sumEmotionsAndSaveCsv(emotionsPointsDataFrame, identifier)
         start = end
 
-    sessionResultsProcessing(identifier)
+    results = sessionResultsProcessing(identifier)
     # delete videos, todo delete all csvs, leave only the main one
     shutil.rmtree(default_storage.path('tmp/{}/tmp_videos'.format(identifier)))
     shutil.rmtree(default_storage.path('tmp/{}/csv'.format(identifier)))
 
     start = end
-    return 1
+    return results
 
 
 def csvProcessing2(session_id, csv_name):
@@ -168,12 +169,12 @@ def findEmotionsPerFrame2(fuArrayFrames):
         surprisePointsArray.append(surprisePoints / 5)
 
     finalEmotionPoints = {
-        'anger': angerPointsArray,
-        'disgust': disgustPointsArray,
-        'fear': fearPointsArray,
-        'happiness': happinessPointsArray,
-        'sadness': sadnessPointsArray,
-        'surprise': surprisePointsArray
+        'an': angerPointsArray,
+        'ds': disgustPointsArray,
+        'fr': fearPointsArray,
+        'hp': happinessPointsArray,
+        'sd': sadnessPointsArray,
+        'sr': surprisePointsArray
     }
     # create dataframe from final emotions points
     finalEmotionPointsDf = pd.DataFrame(finalEmotionPoints)
@@ -203,14 +204,14 @@ def saveResultToCsv(emotionsDict, session_id):
     if (exists(csvPath)):
         with open(csvPath, 'a') as csvFile:
             writer = csv.writer(csvFile)
-            writer.writerow([emotionsDict['anger'], emotionsDict['disgust'], emotionsDict['fear'],
-                             emotionsDict['happiness'], emotionsDict['sadness'], emotionsDict['surprise']])
+            writer.writerow([emotionsDict['an'], emotionsDict['ds'], emotionsDict['fr'],
+                             emotionsDict['hp'], emotionsDict['sd'], emotionsDict['sr']])
     else:
         with open(csvPath, 'a+') as csvFile:
             writer = csv.writer(csvFile)
-            writer.writerow(['anger', 'disgust', 'fear', 'happiness', 'sadness', 'surprise'])
-            writer.writerow([emotionsDict['anger'], emotionsDict['disgust'], emotionsDict['fear'],
-                             emotionsDict['happiness'], emotionsDict['sadness'], emotionsDict['surprise']])
+            writer.writerow(['an', 'ds', 'fr', 'hp', 'sd', 'sr'])
+            writer.writerow([emotionsDict['an'], emotionsDict['ds'], emotionsDict['fr'],
+                             emotionsDict['hp'], emotionsDict['sd'], emotionsDict['sr']])
     return 1
 
 
@@ -238,5 +239,4 @@ def sessionResultsProcessing(session_id):
     dominant = []
     dominant.append(sortedEmotions[0][0])
     dominant.append(sortedEmotions[1][0])
-    print(dominant)
-    return 1
+    return dominant

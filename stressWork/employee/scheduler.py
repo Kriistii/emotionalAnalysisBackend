@@ -38,7 +38,7 @@ def run_analysis():
 
 def startScheduler():
     # run this job every 24 hours
-    scheduler.add_job(run_analysis, 'interval', minutes=5, name='run_analysis', jobstore='default')
+    scheduler.add_job(run_analysis, 'interval', minutes=1, name='run_analysis', jobstore='default')
     scheduler.add_job(save_data, 'interval', hours=24, name='save_data', jobstore='default')
     scheduler.start()
     print("Scheduler started...", file=sys.stdout)
