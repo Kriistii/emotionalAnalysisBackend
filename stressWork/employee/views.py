@@ -14,7 +14,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 
-# web_model = WebBertSimilarity(device='cpu', batch_size=10)
+web_model = WebBertSimilarity(device='cpu', batch_size=10)
 from django.contrib.auth.hashers import make_password
 
 from .utils.utils import dictfetchall
@@ -228,8 +228,8 @@ class NewRecordAPIView(APIView):
         if request.session.get('topicAnswer', None):
             topic = request.session['topic']
             # TODO Analyz the answer wrt of the topic and save the answer in the database
-            # predict = web_model.predict([(topic['name'], text)])
-            predict = 1
+            predict = web_model.predict([(topic['name'], text)])
+
             if predict <= 1:
                 response = Response(
                     {"answer_chatbot": "Please answer to the question I made to you in a clear way.", "question": text})
@@ -360,7 +360,25 @@ class TimeChatOverEmployee(APIView):
                                           "see it when the chat is over. "
                                     , "text2": "You can now stop the chat or continue "
                                                "talking with me!", "coin": True})
-
-
         else:
             return Response("User id not found", status=404)
+
+class RetrieveChatSessionsEmployee(APIView):
+    permission_classes = (IsAuthenticated,)
+
+    def post(self, request):
+        user_id = request.data.get('user_id', None)
+        if user_id is not None:
+            chats = ChatSessionSerializer(get_list_or_404(ChatSession, employee=get_object_or_404(Employee, pk=user_id)), many=True).data
+            return Response({"chats": chats})
+
+class RetrieveChatLogsEmployee(APIView):
+    permission_classes = (IsAuthenticated,)
+
+    def post(self, request):
+        chat_id = request.data.get('chat_id', None)
+
+        if chat_id is not None:
+            chat_logs = ChatSessionSerializer(get_object_or_404(ChatSession, pk=chat_id))
+            print(chat_logs)
+

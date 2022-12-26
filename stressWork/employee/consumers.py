@@ -2,10 +2,11 @@ from channels.generic.websocket import AsyncJsonWebsocketConsumer
 import json
 import uuid
 from .services import chatbot, video, audio, text_service, chat
-from .models import ChatSession, ChatSessionMessage, Employee
+from .models import ChatSession, ChatSessionMessage, Employee, EmployeeTopic, Topic
 import filetype
 
-from asgiref.sync import sync_to_async
+from semantic_text_similarity.models import WebBertSimilarity
+web_model = WebBertSimilarity(device='cpu', batch_size=10)
 
 
 class ChatConsumer(AsyncJsonWebsocketConsumer):
@@ -29,29 +30,57 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         session = self.scope["session"]
         chat_session_id = session['session_id']
         name = uuid.uuid4()
+        text = None
+        answer = None
+        response = None
+        video_path = None
+        audio_path = None
+        type = None
         try:
             if text_data:
+                type = 'text'
                 message = json.loads(text_data)
-                answer = await (chatbot.compute_answer(session, message['data'], employee_id))
-                await chat.createChatSessionMessage(chat_session_id, message['data'], answer, None, None)
-                await self.send(json.dumps({"answer_chatbot": answer, "question": message['data'], "type": 'text'}))
+                text = message['data']
+                answer = await (chatbot.compute_answer(session, text, employee_id))
+                response = json.dumps({"answer_chatbot": answer, "question": text, "type": type})
             if bytes_data:
                 kind = filetype.guess(bytes_data)
                 if kind.extension == 'wav':
+                    type = 'media'
                     audio_file = bytes_data
                     audio_path = audio.save_audio(chat_session_id, audio_file, name) #add path to return of save audio
                     text = audio.speech_to_text(chat_session_id, name)
                     answer = await chatbot.compute_answer(session, text, employee_id)
-                    await chat.createChatSessionMessage(chat_session_id, text, answer, audio_path, None)
-                    await self.send(json.dumps({"answer_chatbot": answer, "question": text, "type": 'media'}))
+                    response = json.dumps({"answer_chatbot": answer, "question": text, "type": type})
                 elif kind.extension == 'mkv':
+                    type = 'media'
                     video_file = bytes_data
                     video_path = video.save_video(chat_session_id, video_file, name)
                     audio_path = audio.video_to_audio(chat_session_id, name)
                     text = audio.speech_to_text(chat_session_id, name)
                     answer = await chatbot.compute_answer(session, text, employee_id)
-                    await chat.createChatSessionMessage(chat_session_id, text, answer, audio_path, video_path)
-                    await self.send(json.dumps({"answer_chatbot": answer, "question": text, "type": 'media'}))
+                    response = json.dumps({"answer_chatbot": answer, "question": text, "type": type})
+            if session.get('topicAnswer', None):
+                topic = session['topic']
+                predict = web_model.predict([(topic['name'], text)])
+
+                if predict <= 1:
+                    response = json.dumps({"answer_chatbot": "Please answer to the question I made to you in a clear way.",
+                         "question": text, "type": type})
+                else:
+                    await chatbot.addNewEmployeeTopic(topic['id'], employee_id, text)
+                    answer = await chatbot.compute_answer(session, text, employee_id)
+                    response = json.dumps(
+                        {"answer_chatbot": answer,
+                         "question": text, "type": type})
+                    del session['topicAnswer']
+                    del session['topic']
+            if session.get('topicQuestion', None):
+                session['topicAnswer'] = True
+                del session['topicQuestion']
+            await chat.createChatSessionMessage(chat_session_id, text, answer, audio_path, video_path)
+            await self.send(response)
+
         except Exception as e:
             print(e)
 

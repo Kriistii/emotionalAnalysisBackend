@@ -1,7 +1,7 @@
 import openai
 import random
 import re
-from ..models import EmployeeTopic, Topic
+from ..models import EmployeeTopic, Topic, Employee
 from ..serializers import TopicSerializer, EmployeeTopicSerializer
 from asgiref.sync import sync_to_async
 
@@ -15,11 +15,15 @@ start_chat_log = "Cloudia: Hello, Alessio I am Cloudia, the first bot that will 
 start_fsession_message = "Cloudia: Hello, Alessio I am Cloudia, the first bot that will make you talk during work hours! By talking with me you'll get some rewards, also you'll help your company to build the best possible enviroment to work on! In fact every data collected will be used by your employers to improve the life quality at the company, so don't worry, you can share everything with me!"
 start_chat_lol_fsession = "Cloudia: Hello, Alessio I am Cloudia, the first bot that will make you talk during work hours! By talking with me you'll get some rewards, also you'll help your company to build the best possible enviroment to work on! In fact every data collected will be used by your employers to improve the life quality at the company, so don't worry, you can share everything with me!\n\nHuman: What you are used to?\nCloudia: We will talk together about everything, later your data can be seen only by your employer\n\nHuman: What i get by talking with you?\nCloudia: By talking with me for 3 minutes you'll earn a coin. Later you can spend the coin to speel the wheel and win some prizes!\n\nHuman: How many times can i talk to you?\nCloudia: You can talk with me as many times as you like, but you'll earn the coins only twice every day."
 
-restart_conversation_phrase = ["I am sorry but I didn't understand. By the way, let's change topic! ",
-                               "Oh, I think i didn't understand what you mean, but it is fine, we can talk about it later. Let's change subject for the moment! "]
+restart_conversation_phrase_not_understood = ["I am sorry but I didn't understand. By the way, let's change topic! ",
+                                              "Oh, I think i didn't understand what you mean, but it is fine, we can talk about it "
+                                              "later. Let's change subject for the moment! "]
+
+restart_conversation_phrase_no_question = [
+    "I am sorry to be rude, but what you think about we change topic? I would like to know more about you! ", "I see that this subject is really interesting for you, but I am not an expert. What you think about if i ask you one question, so I start to know you better! " ]
 
 
-async def ask(question, employee_id, session, chat_log=None,):
+async def ask(question, employee_id, session, chat_log=None, ):
     prompt_text = f'{chat_log}{restart_sequence}:{question}{start_sequence}:'
     response = openai.Completion.create(
         model="text-davinci-003",
@@ -33,14 +37,16 @@ async def ask(question, employee_id, session, chat_log=None,):
     )
     story = response['choices'][0]['text']
 
+    if re.search("Have a", story, re.IGNORECASE):
+        return str(story)
     if len(story) > 1 and '?' in story:
         return str(story)
     if len(story) <= 1 or re.search("I didn't understand", story, re.IGNORECASE):
         answer = await keep_conversation_alive(employee_id, session)
-        return f'{restart_conversation_phrase[random.randint(0, len(restart_conversation_phrase) - 1)]} {answer}'
+        return f'{restart_conversation_phrase_not_understood[random.randint(0, len(restart_conversation_phrase_not_understood) - 1)]} {answer}'
     if '?' not in story:
         question = await keep_conversation_alive(employee_id, session)
-        return f"{story} Let's change topic! {question}"
+        return f"{story}  {restart_conversation_phrase_no_question[random.randint(0, len(restart_conversation_phrase_no_question) - 1)]} {question}"
 
 
 def append_interaction_to_chat_log(question, answer, chat_log=None):
@@ -64,10 +70,9 @@ def keep_conversation_alive(emp_id, session):
         session['topicQuestion'] = True
         return selected_topic['start_question']
     elif len(employee_topics_id_list) > 0:
-        subject = employee_topics[random.randint(0, len(employee_topics)-1)]
+        subject = employee_topics[random.randint(0, len(employee_topics) - 1)]
         answer = compute_answer(
             session, f'Ask me a question about {subject["answer"]}', emp_id)
-        # TODO need to ask questions about the topics the user already replied to
         return answer
 
 
@@ -80,3 +85,10 @@ async def compute_answer(session, question, employee_id):
         question, answer, chat_log)
     # TODO save the question and the answer somewhere
     return answer
+
+
+@sync_to_async
+def addNewEmployeeTopic(topic_id, employee_id, answer):
+    EmployeeTopic.objects.create(topic=Topic(pk=topic_id), employee=Employee(pk=employee_id),
+                                 answer=answer)
+    return

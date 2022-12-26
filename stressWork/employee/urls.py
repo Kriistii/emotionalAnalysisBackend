@@ -9,6 +9,8 @@ employee_detail_api = EmployeeDetailAPIView.as_view()
 new_record = NewRecordAPIView.as_view()
 timer_chat_over = TimeChatOverEmployee.as_view()
 close_chat = CloseChatAPIView.as_view()
+retrieve_chat_sessions_employee = RetrieveChatSessionsEmployee.as_view()
+retrieve_chat_logs_employee = RetrieveChatLogsEmployee.as_view()
 
 start_chat = StartChatAPIView.as_view()
 retrieve_employee_information = RetrieveEmployeeInformation.as_view()
@@ -38,6 +40,8 @@ urlpatterns = [
     path('timerChatOver', timer_chat_over, name="timer_chat_over"),
     path("testVideoAnalysis", test_video_analysis, name="test-video-analysis"),
     path("createEmployee", employee_create, name="employee-create"),
+    path("retrieveChatSessionsEmployee", retrieve_chat_sessions_employee, name="retrieve_chat_sessions_employee"),
+    path("retrieveChatLogsEmployee", retrieve_chat_logs_employee, name="retrieve_chat_logs_employee"),
     path("<int:employee_id>", employee_detail_api, name="employee-detail"),
     path("newMessage/<int:employee_id>", new_record, name="new_message"),
     path("startChat/<int:employee_id>", start_chat, name="start_chat"),
