@@ -1,5 +1,6 @@
 from asgiref.sync import sync_to_async
 from ..models import Employee, ChatSession, ChatSessionMessage
+from ..serializers import *
 from datetime import datetime
 
 
@@ -21,5 +22,10 @@ def createChatSessionMessage(session_id, text, answer, audio, video):
 def completeChat(session_id):
 
     chatSession = ChatSession.objects.get(pk=session_id)
-    chatSession.completed = True
-    chatSession.save()
+    chat_messages = ChatSessionMessage.objects.filter(session=chatSession)
+    if len(chat_messages) == 0:
+        print("Delete")
+        chatSession.delete()
+    else:
+        chatSession.completed = True
+        chatSession.save()

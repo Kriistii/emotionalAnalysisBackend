@@ -58,7 +58,7 @@ class ChatSessionMessageSerializer(serializers.ModelSerializer):
 class ChatSessionSerializer(serializers.ModelSerializer):
     class Meta:
         model = ChatSession
-        fields = ['id', 'date', 'first_prevailing_emotion', 'second_prevailing_emotion', 'analyzed', 'full_conversation_path']
+        fields = ['id', 'date', 'first_prevailing_emotion', 'second_prevailing_emotion', 'analyzed', 'full_conversation_path', "full_video_path", "full_audio_path"]
 
 
 

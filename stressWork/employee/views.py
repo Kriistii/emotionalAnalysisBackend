@@ -16,8 +16,10 @@ from rest_framework.permissions import IsAuthenticated
 
 web_model = WebBertSimilarity(device='cpu', batch_size=10)
 from django.contrib.auth.hashers import make_password
+from django.core.files.storage import default_storage
 
 from .utils.utils import dictfetchall
+import json
 
 
 class EmployeeStatsAPIView(APIView):
@@ -369,7 +371,7 @@ class RetrieveChatSessionsEmployee(APIView):
     def post(self, request):
         user_id = request.data.get('user_id', None)
         if user_id is not None:
-            chats = ChatSessionSerializer(get_list_or_404(ChatSession, employee=get_object_or_404(Employee, pk=user_id)), many=True).data
+            chats = ChatSessionSerializer(get_list_or_404(ChatSession.objects.filter(employee=get_object_or_404(Employee, pk=user_id), analyzed=True).order_by("-date")), many=True).data
             return Response({"chats": chats})
 
 class RetrieveChatLogsEmployee(APIView):
@@ -377,8 +379,10 @@ class RetrieveChatLogsEmployee(APIView):
 
     def post(self, request):
         chat_id = request.data.get('chat_id', None)
-
         if chat_id is not None:
-            chat_logs = ChatSessionSerializer(get_object_or_404(ChatSession, pk=chat_id))
-            print(chat_logs)
+            chat_logs = ChatSessionSerializer(get_object_or_404(ChatSession, pk=chat_id)).data
+            conversation_path = default_storage.path(chat_logs['full_conversation_path'])
+            f = open(conversation_path)
+            logs = json.load(f)
+            return Response({"chat": logs, "date": chat_logs['date']})
 

@@ -4,6 +4,7 @@ from ..models import ChatSessionMessage, ChatSession
 import json
 from asgiref.sync import sync_to_async
 import os
+from datetime import datetime
 
 
 
@@ -25,8 +26,9 @@ def mergeAndAnalyzeText(chat_session_id):
     if len(session_messages):
         conversation = []
         for message in session_messages:
-            conversation.append({"from": "User", "text": message.text})
-            conversation.append({"from": "Chatbot", "text": message.chatbot_answer})
+            conversation.append({"from": "User", "text": message.text, "timestamp": str(message.date) })
+            conversation.append({"from": "Chatbot", "text": message.chatbot_answer, "timestamp": str(message.date)})
+        print(conversation)
         text_path = f'tmp/{chat_session_id}/chat_text.json'
         os.makedirs(os.path.dirname(text_path), exist_ok=True)
         with open(text_path, "w") as outfile:
