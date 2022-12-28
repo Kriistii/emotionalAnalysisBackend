@@ -1,6 +1,7 @@
 from asgiref.sync import sync_to_async
 from ..models import Employee, ChatSession, ChatSessionMessage
 from ..serializers import *
+from ..scheduler import *
 from datetime import datetime
 
 
@@ -19,13 +20,21 @@ def createChatSessionMessage(session_id, text, answer, audio, video):
 
 
 @sync_to_async
-def completeChat(session_id):
+def completeChat(session_id, employee_id):
 
     chatSession = ChatSession.objects.get(pk=session_id)
     chat_messages = ChatSessionMessage.objects.filter(session=chatSession)
     if len(chat_messages) == 0:
-        print("Delete")
         chatSession.delete()
     else:
+        employee = chatSession.employee
+        #If first session after being stress-analyzed
+        print(employee.firstSession)
+        if employee.firstSession:
+            scheduler.add_job(stressAnalysis, 'date', run_date=datetime.now() + timedelta(days=15),
+                              name='stress_analysis', args=[employee_id], jobstore='default')
+            employee.firstSession = False
+            employee.save()
+
         chatSession.completed = True
         chatSession.save()

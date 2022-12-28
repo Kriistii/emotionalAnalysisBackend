@@ -5,6 +5,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from .models import Employee, StressRecord, ChatSession, Emotion
 from .serializers import ChatSessionSerializer
 from .services import text_service, audio, video
+from datetime import datetime,timedelta
 
 scheduler = BackgroundScheduler()
 
@@ -41,7 +42,6 @@ def run_analysis():
 
             sum_emotions[e] = score_text + score_video + score_audio
         sum_emotions_ordered = sorted(sum_emotions.items(), key=lambda x: x[1], reverse=True)
-        print("result")
         first_emotion = sum_emotions_ordered[0]
         second_emotion = sum_emotions_ordered[1]
         c = ChatSession.objects.get(pk=chatId)
@@ -55,6 +55,53 @@ def run_analysis():
         c.save()
         #TODO save result and don't save the second emotion if its not at least half (Or just not save it at all)
 
+
+
+
+def stressAnalysis(employee_id):
+    #Params
+    minumumDays = 7
+    thresholdStressPercentage = 0.7
+    good_emotions = [3, 5]
+    bad_emotions = [1, 2, 4]
+
+    #Logic
+    emp = Employee.objects.get(pk=employee_id)
+    chats = ChatSessionSerializer(ChatSession.objects.filter(employee=emp, completed=True, date__range=(datetime.now() - timedelta(days=15), datetime.now())).order_by('-date'), many=True).data
+    analyzed_dates = []
+    for c in chats:
+        date = datetime.strptime(c['date'], '%Y-%m-%dT%H:%M:%S.%fZ').date()
+        if date not in analyzed_dates:
+            analyzed_dates.append(date)
+    if len(analyzed_dates) < minumumDays:
+        emp.firstSession = True
+        emp.save()
+        return
+    else:
+        score_positive = 0
+        score_negative = 0
+
+        for ch in chats:
+            if ch['first_prevailing_emotion'] in good_emotions:
+                score_positive = score_positive + 1
+            elif ch['first_prevailing_emotion'] in bad_emotions:
+                score_negative = score_negative + 1
+            if ch['second_prevailing_emotion'] in good_emotions:
+                score_positive = score_positive + 0.5
+            elif ch['second_prevailing_emotion'] in bad_emotions:
+                score_negative = score_negative + 0.5
+
+        negativePercentage = score_negative / (score_positive + score_negative)
+
+        emp.firstSession = True
+
+        if negativePercentage >= thresholdStressPercentage:
+            emp.stressed = True
+        else:
+            emp.stressed = False
+
+        emp.save()
+        return
 
 def startScheduler():
     # run this job every 24 hours
