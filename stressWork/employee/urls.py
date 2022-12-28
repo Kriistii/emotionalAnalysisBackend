@@ -11,6 +11,8 @@ timer_chat_over = TimeChatOverEmployee.as_view()
 close_chat = CloseChatAPIView.as_view()
 retrieve_chat_sessions_employee = RetrieveChatSessionsEmployee.as_view()
 retrieve_chat_logs_employee = RetrieveChatLogsEmployee.as_view()
+spin_the_wheel = SpinTheWheel.as_view()
+check_coins = CheckCoins.as_view()
 
 start_chat = StartChatAPIView.as_view()
 retrieve_employee_information = RetrieveEmployeeInformation.as_view()
@@ -39,6 +41,8 @@ urlpatterns = [
     path('retrieveEmployeeInformation', retrieve_employee_information, name="retrieve-employee-information" ),
     path('timerChatOver', timer_chat_over, name="timer_chat_over"),
     path("testVideoAnalysis", test_video_analysis, name="test-video-analysis"),
+    path("spinTheWheel", spin_the_wheel, name="spin-the-wheel"),
+    path("checkCoins", check_coins, name="check-coins"),
     path("createEmployee", employee_create, name="employee-create"),
     path("retrieveChatSessionsEmployee", retrieve_chat_sessions_employee, name="retrieve_chat_sessions_employee"),
     path("retrieveChatLogsEmployee", retrieve_chat_logs_employee, name="retrieve_chat_logs_employee"),

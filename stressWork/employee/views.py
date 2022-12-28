@@ -328,7 +328,6 @@ class RetrieveEmployeeInformation(APIView):
         user_id = request.data.get('user_id', None)
         if user_id is not None:
             emp = EmployeeSerializer(get_object_or_404(Employee, user=get_object_or_404(AppUsers, pk=user_id))).data
-            print(emp['name'])
             return Response({"employee": emp})
         else:
             return Response("User id not found")
@@ -385,4 +384,29 @@ class RetrieveChatLogsEmployee(APIView):
             f = open(conversation_path)
             logs = json.load(f)
             return Response({"chat": logs, "date": chat_logs['date']})
+
+class SpinTheWheel(APIView):
+    permission_classes = (IsAuthenticated,)
+    def post(self, request):
+        user_id = request.data.get('user_id', None)
+        if user_id is not None:
+            user = Employee.objects.get(pk=user_id)
+            if user.coins == 0:
+                return Response("Non enough coins", 500)
+            user.coins = user.coins - 1
+            user.save()
+            emp_serialized = EmployeeSerializer(user).data
+            return Response({"employee": emp_serialized})
+
+class CheckCoins(APIView):
+    permission_classes = (IsAuthenticated,)
+
+    def post(self, request):
+        user_id = request.data.get('user_id', None)
+        if user_id is not None:
+            user = Employee.objects.get(pk=user_id)
+            if user.coins == 0:
+                return Response("Non enough coins", 500)
+            return Response("The user has enough coins to play")
+
 

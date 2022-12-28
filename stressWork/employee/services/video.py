@@ -204,13 +204,13 @@ def saveResultToCsv(emotionsDict, session_id):
     if (exists(csvPath)):
         with open(csvPath, 'a') as csvFile:
             writer = csv.writer(csvFile)
-            writer.writerow([emotionsDict['an'], emotionsDict['ds'], emotionsDict['fr'],
+            writer.writerow([emotionsDict['an'], emotionsDict['fr'],
                              emotionsDict['hp'], emotionsDict['sd'], emotionsDict['sr']])
     else:
         with open(csvPath, 'a+') as csvFile:
             writer = csv.writer(csvFile)
-            writer.writerow(['an', 'ds', 'fr', 'hp', 'sd', 'sr'])
-            writer.writerow([emotionsDict['an'], emotionsDict['ds'], emotionsDict['fr'],
+            writer.writerow(['an' , 'fr', 'hp', 'sd', 'sr'])
+            writer.writerow([emotionsDict['an'], emotionsDict['fr'],
                              emotionsDict['hp'], emotionsDict['sd'], emotionsDict['sr']])
     return 1
 
@@ -236,7 +236,4 @@ def sessionResultsProcessing(session_id):
         normalizedValues[key] = round(i * 100 / valueSum, 2)
     # sort descendand to find 2 dominant ones
     sortedEmotions = sorted(normalizedValues.items(), key=lambda x:x[1], reverse=True)
-    dominant = []
-    dominant.append(sortedEmotions[0][0])
-    dominant.append(sortedEmotions[1][0])
-    return dominant
+    return normalizedValues

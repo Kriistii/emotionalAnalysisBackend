@@ -82,8 +82,10 @@ def analyze_audio(audio_path):
         r = pd.DataFrame(outputs)
         r = r.astype({'Score': 'float'})
         r.sort_values(['Score'], ascending=False, inplace=True)
-        r_top_2 = r.iloc[:2]
-        return r_top_2['Emotion'].tolist()
+        dict_emotions = dict(zip(r['Emotion'], r['Score']))
+        filtered_emotion_dict = {'sd': dict_emotions['sd'], 'an': dict_emotions['an'], 'fr': dict_emotions['fr'], 'hp': dict_emotions['hp'],
+                      'sr': dict_emotions['sr']}
+        return filtered_emotion_dict
 
     result = prediction(audio_path)
     return result

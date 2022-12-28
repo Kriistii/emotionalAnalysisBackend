@@ -17,8 +17,11 @@ def safe_open_w(path):
 def analyzeText(text):
     r = pd.DataFrame.from_dict(te.get_emotion(text), orient='index')
     r.sort_values(r.columns[0], ascending=False, inplace=True)
-    r_top_2 = r.iloc[:2]
-    return r_top_2.index.values.tolist()
+    dictionary = r[0].to_dict()
+    emotions_score = {'sd': dictionary['Sad'], 'an': dictionary['Angry'], 'fr': dictionary['Fear'], 'hp': dictionary['Happy'],
+                      'sr': dictionary['Surprise']}
+
+    return emotions_score
 
 
 def mergeAndAnalyzeText(chat_session_id):
@@ -28,7 +31,6 @@ def mergeAndAnalyzeText(chat_session_id):
         for message in session_messages:
             conversation.append({"from": "User", "text": message.text, "timestamp": str(message.date) })
             conversation.append({"from": "Chatbot", "text": message.chatbot_answer, "timestamp": str(message.date)})
-        print(conversation)
         text_path = f'tmp/{chat_session_id}/chat_text.json'
         os.makedirs(os.path.dirname(text_path), exist_ok=True)
         with open(text_path, "w") as outfile:
