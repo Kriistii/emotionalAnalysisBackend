@@ -34,6 +34,8 @@ djangorestframework==3.14.0
 djangorestframework-simplejwt==5.2.2
 dlib==19.24.0
 emoji==1.7.0
+en-core-web-sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.4.1/en_core_web_sm-3.4.1-py3-none-any.whl
+en-core-web-trf @ https://github.com/explosion/spacy-models/releases/download/en_core_web_trf-3.4.1/en_core_web_trf-3.4.1-py3-none-any.whl
 et-xmlfile==1.1.0
 fcm-django==1.0.12
 ffmpeg-python==0.2.0
