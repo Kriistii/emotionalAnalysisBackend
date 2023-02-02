@@ -16,6 +16,7 @@ check_coins = CheckCoins.as_view()
 
 start_chat = StartChatAPIView.as_view()
 retrieve_employee_information = RetrieveEmployeeInformation.as_view()
+retrieve_employer_information = RetrieveEmployerInformation.as_view()
 test_video_analysis = TestVideoAnalysisAPIView.as_view()
 
 stats = EmployeeStatsAPIView.as_view()
@@ -24,7 +25,7 @@ trendTime = StressStatsTimespan.as_view()
 prizes = GetPrizes.as_view()
 wheels = GetWheels.as_view()
 
-newEmployer = NewEmployer.as_view()
+newEmployee = NewEmployee.as_view()
 newPrize = NewPrize.as_view()
 newWheel = NewWheel.as_view()
 
@@ -34,11 +35,13 @@ delWheel = DelWheel.as_view()
 editPrize = EditPrize.as_view()
 
 interactionSummary = GetInteractionSummary.as_view()
+userInteractions = GetUserInteractions.as_view()
 
 urlpatterns = [
     path("", employee_api, name="employees"),
     path('register-notif-token/', FCMDeviceAuthorizedViewSet.as_view({'post': 'create'}), name='create_fcm_device'),
     path('retrieveEmployeeInformation', retrieve_employee_information, name="retrieve-employee-information" ),
+    path('retrieveEmployerInformation', retrieve_employer_information, name="retrieve-employer-information"),
     path('timerChatOver', timer_chat_over, name="timer_chat_over"),
     path("testVideoAnalysis", test_video_analysis, name="test-video-analysis"),
     path("spinTheWheel", spin_the_wheel, name="spin-the-wheel"),
@@ -53,7 +56,7 @@ urlpatterns = [
     path("backoffice", stats, name="stats"),
     path("trend", trend, name="trend"),
     path("trend/<str:timespan>", trendTime, name="trendTime"),
-    path("newEmployer", newEmployer, name="newEmployer"),
+    path("newEmployee", newEmployee, name="newEmployee"),
     path("newPrize/<int:wheel_id>", newPrize, name="newPrize"),
     path("prizes/<int:wheel_id>", prizes, name="prizes"),
     path("delPrize/<int:prize_id>", delPrize, name="delPrize"),
@@ -62,5 +65,6 @@ urlpatterns = [
     path("newWheel", newWheel, name="newWheel"),
     path("delWheel/<int:wheel_id>", delWheel, name="delWheel"),
     path("getInteractionSummary", interactionSummary, name="interactionSummary"),
+    path("getInteractions/<int:employee_id>", userInteractions, name="userInteractions"),
 ]
 

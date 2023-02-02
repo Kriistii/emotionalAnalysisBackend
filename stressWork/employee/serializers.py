@@ -5,7 +5,7 @@ from dj_rest_auth.serializers import UserDetailsSerializer
 class EmployeeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Employee
-        fields = ['id', 'name', 'surname', 'birthday', 'company',  'coins']
+        fields = ['id', 'name', 'surname', 'birthday', 'stressed', 'firstSession', 'company', 'user', 'coins']
 
 
 class EmployerSerializer(serializers.ModelSerializer):
@@ -41,7 +41,7 @@ class PrizeSerializer(serializers.ModelSerializer):
 class WheelSerializer(serializers.ModelSerializer):
     class Meta:
         model = Wheel
-        fields = ['id', 'company_id']
+        fields = ['id', 'company']
 
 
 class AppUsersSerializer(serializers.ModelSerializer):
@@ -58,7 +58,7 @@ class ChatSessionMessageSerializer(serializers.ModelSerializer):
 class ChatSessionSerializer(serializers.ModelSerializer):
     class Meta:
         model = ChatSession
-        fields = ['id', 'date', 'first_prevailing_emotion', 'second_prevailing_emotion', 'analyzed', 'full_conversation_path', "full_video_path", "full_audio_path"]
+        fields = ['id', 'employee', 'date', 'first_prevailing_emotion', 'second_prevailing_emotion', 'full_conversation_path', "full_video_path", "full_audio_path", 'analyzed', 'completed']
 
 
 

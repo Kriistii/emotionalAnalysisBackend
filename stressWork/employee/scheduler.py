@@ -1,18 +1,25 @@
 import sys
+from datetime import datetime, timedelta
 
 from apscheduler.schedulers.background import BackgroundScheduler
+from django.db.models import Count
 
 from .models import Employee, StressRecord, ChatSession, Emotion
 from .serializers import ChatSessionSerializer
 from .services import text_service, audio, video
-from datetime import datetime,timedelta
 
 scheduler = BackgroundScheduler()
 
 
 def save_data():
-    stressedEmployees = Employee.objects.filter(stressed=True).count()
-    StressRecord.objects.create(stressedUsers=stressedEmployees)
+    stressedEmployees = Employee.objects.filter(stressed=True)\
+        .values('company_id')\
+        .annotate(stressedEmployees=Count('*'))\
+        .order_by()
+
+    for entry in stressedEmployees:
+        stressRecord = StressRecord(stressedUsers=entry['stressedEmployees'], company_id=entry['company_id'])
+        stressRecord.save()
 
 def run_analysis():
     chat = ChatSession.objects.filter(analyzed=False, completed=True).order_by('date')
