@@ -67,7 +67,7 @@ def analyze_video(identifier):
         end = start + 1
 
         duration = duration - 1
-        path_video = f'tmp/{identifier}/tmp_videos/{end}.webm'
+        path_video = f'tmp/{identifier}/tmp_videos/{start}.webm'
         os.makedirs(os.path.dirname(path_video), exist_ok=True)
         clip = video.subclip(start, end)
         clip.write_videofile(path_video)
@@ -78,7 +78,7 @@ def analyze_video(identifier):
                         shell=True)
 
         # emotion analysis
-        mostCommonUnits = csvProcessing2(identifier, end)
+        mostCommonUnits = csvProcessing2(identifier, start)
         emotionsPointsDataFrame = findEmotionsPerFrame2(mostCommonUnits)
         sumEmotionsAndSaveCsv(emotionsPointsDataFrame, identifier)
         start = end

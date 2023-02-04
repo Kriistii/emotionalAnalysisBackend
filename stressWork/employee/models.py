@@ -76,10 +76,11 @@ class Emotion(models.Model):
         db_table = 'emotion'
 
     emotion_name = models.CharField(max_length=50)
+    extended_name = models.CharField(max_length=100)
     objects = models.Manager()
 
     def __str__(self) -> str:
-        return f"{'emotion_name:' +  str(self.emotion_name)}"
+        return f"{'emotion_name:' +  str(self.emotion_name) + 'extended_name:' + str(self.extended_name)}"
 
 
 class ChatSession(models.Model):

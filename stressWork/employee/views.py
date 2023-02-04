@@ -18,8 +18,10 @@ from rest_framework.permissions import IsAuthenticated
 web_model = WebBertSimilarity(device='cpu', batch_size=10)
 from django.contrib.auth.hashers import make_password
 from django.core.files.storage import default_storage
+from pandas import *
 
 import json
+import csv
 
 
 class EmployeeStatsAPIView(APIView):
@@ -177,9 +179,13 @@ class GetUserInteractions(APIView):
         # query = "SELECT id, date, first_prevailing_emotion FROM chatsession WHERE employee=%d ORDER BY date DESC"
 
         result = ChatSession.objects.filter(employee=employee_id).order_by("-date")
-        serializer = ChatSessionSerializer(result, many=True)
+        serializer = ChatSessionSerializer(result, many=True).data
 
-        return Response(serializer.data)
+        for s in serializer:
+            firstEmotion = get_object_or_404(Emotion, id=s['first_prevailing_emotion'])
+            s['first_prevailing_emotion'] = EmotionsSerializer(firstEmotion).data['extended_name']
+
+        return Response(serializer)
 
 class EmployeeAPIView(APIView):
 
@@ -306,6 +312,30 @@ class CreateEmployeeAPIView(APIView):
                                            stressed=stressedField, user=user)
 
         employee.save()
+        return Response("Ok")
+
+class CreateEmployerAPIView(APIView):
+    def post(self, request):
+        if request.POST.get('email', None):
+            emailField = request.POST['email']
+        if request.POST.get('name', None):
+            nameField = request.POST['name']
+        if request.POST.get('surname', None):
+            surnameField = request.POST['surname']
+        if request.POST.get('birthday', None):
+            birthdayField = request.POST['birthday']
+        if request.POST.get('company', None):
+            companyField = Company.objects.get(id=request.POST['company'])
+        if request.POST.get('password', None):
+            passwordField = make_password(request.POST['password'])
+
+        user = AppUsers.objects.create(email=emailField, password=passwordField, is_active=True, is_staff=True,
+                                       is_superuser=False)
+        user.save()
+        employer = Employer.objects.create(birthday=birthdayField,
+                                           name=nameField, surname=surnameField, company=companyField, user=user)
+
+        employer.save()
         return Response("Ok")
 
 
@@ -436,5 +466,39 @@ class CheckCoins(APIView):
             if user.coins == 0:
                 return Response("Non enough coins", 500)
             return Response("The user has enough coins to play")
+
+
+class InteractionDetailsAPIView(APIView):
+    def get(self, request, chat_id):
+        chat_session = get_object_or_404(ChatSession, id=chat_id)
+        csv_results = None;
+        serializerChat = ChatSessionSerializer(chat_session).data
+        if(serializerChat['first_prevailing_emotion']):
+            firstEmotion = get_object_or_404(Emotion, id=serializerChat['first_prevailing_emotion'])
+            serializerChat['first_prevailing_emotion'] = EmotionsSerializer(firstEmotion).data['extended_name']
+        if(serializerChat['second_prevailing_emotion']):
+            secondEmotion = get_object_or_404(Emotion, id=serializerChat['second_prevailing_emotion'])
+            serializerChat['second_prevailing_emotion'] = EmotionsSerializer(secondEmotion).data['extended_name']
+        if(serializerChat['full_video_path']):
+            serializerChat['hasGraph'] = True
+            data = read_csv("tmp/{}/video_analysis.csv".format(chat_id))
+
+            hp = data['hp'].tolist()
+            fr = data['fr'].tolist()
+            an = data['an'].tolist()
+            sd = data['sd'].tolist()
+            sr = data['sr'].tolist()
+
+            print(data)
+
+            csv_results = {'Happiness': hp, 'Fear': fr, 'Anger': an, 'Sadness': sd, 'Surprise': sr, 'length_conversation': len(data.index)}
+        else:
+            serializerChat['hasGraph'] = False
+
+        employee = get_object_or_404(Employee, id=serializerChat['employee'])
+        serializerEmployee = EmployeeSerializer(employee).data
+
+
+        return Response(data={"analysis": serializerChat, "empl_info": serializerEmployee, "csv_results" : csv_results}, status=status.HTTP_200_OK)
 
 

@@ -5,6 +5,7 @@ from .consumers import *
 
 employee_api = EmployeeAPIView.as_view()
 employee_create = CreateEmployeeAPIView.as_view()
+employer_create = CreateEmployerAPIView.as_view()
 employee_detail_api = EmployeeDetailAPIView.as_view()
 new_record = NewRecordAPIView.as_view()
 timer_chat_over = TimeChatOverEmployee.as_view()
@@ -24,6 +25,7 @@ trend = StressStats.as_view()
 trendTime = StressStatsTimespan.as_view()
 prizes = GetPrizes.as_view()
 wheels = GetWheels.as_view()
+interaction_details = InteractionDetailsAPIView.as_view()
 
 newEmployee = NewEmployee.as_view()
 newPrize = NewPrize.as_view()
@@ -46,7 +48,9 @@ urlpatterns = [
     path("testVideoAnalysis", test_video_analysis, name="test-video-analysis"),
     path("spinTheWheel", spin_the_wheel, name="spin-the-wheel"),
     path("checkCoins", check_coins, name="check-coins"),
+    path("getAnalysis/<uuid:chat_id>", interaction_details, name="interaction_details"),
     path("createEmployee", employee_create, name="employee-create"),
+    path("createEmployer", employer_create, name="employer-create"),
     path("retrieveChatSessionsEmployee", retrieve_chat_sessions_employee, name="retrieve_chat_sessions_employee"),
     path("retrieveChatLogsEmployee", retrieve_chat_logs_employee, name="retrieve_chat_logs_employee"),
     path("<int:employee_id>", employee_detail_api, name="employee-detail"),
