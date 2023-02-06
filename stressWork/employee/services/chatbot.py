@@ -36,15 +36,15 @@ async def ask(question, employee_id, session, chat_log=None, ):
 
     if re.search("Have a", story, re.IGNORECASE):
         return str(story)
-    if len(story) > 1 and '?' in story:
-        return str(story)
+
     if len(story) <= 1 or re.search("I didn't understand", story, re.IGNORECASE):
         answer = await keep_conversation_alive(employee_id, session)
         return f'{restart_conversation_phrase_not_understood[random.randint(0, len(restart_conversation_phrase_not_understood) - 1)]} {answer}'
     if '?' not in story and not (re.search("talk", story, re.IGNORECASE) or re.search("discuss", story, re.IGNORECASE)):
         question = await keep_conversation_alive(employee_id, session)
         return f"{story}  {restart_conversation_phrase_no_question[random.randint(0, len(restart_conversation_phrase_no_question) - 1)]} {question}"
-
+    else:
+        return str(story)
 
 def append_interaction_to_chat_log(question, answer, chat_log=None):
     if chat_log is None:
