@@ -20,8 +20,9 @@ from ..utilityFunctions import safe_open
 from ..models import ChatSessionMessage, ChatSession
 from ..serializers import ChatSessionMessageSerializer
 from moviepy.editor import *
-from asgiref.sync import sync_to_async
+import environ
 
+env = environ.Env()
 
 def speech_to_text(session_id, identifier):
     audio_path = default_storage.path("tmp/{}/audios/{}.wav".format(session_id, identifier))
@@ -51,7 +52,7 @@ def save_audio(session_id, audio_file, name):
 
 def analyze_audio(audio_path):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model_name_or_path = default_storage.path('content/model/pretrained-model')
+    model_name_or_path = env('MODEL_PATH')
     config = AutoConfig.from_pretrained(
         model_name_or_path, local_files_only=True)
     processor = Wav2Vec2Processor.from_pretrained(
