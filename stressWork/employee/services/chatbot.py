@@ -10,10 +10,7 @@ completion = openai.Completion()
 
 start_sequence = "\nCloudia:"
 restart_sequence = "\n\nHuman:"
-start_message = "Cloudia: Hello, Alessio I am Cloudia, the first bot that will make you talk during work hours!"
-start_chat_log = "Cloudia: Hello, Alessio I am Cloudia, the first bot that will make you talk during work hours!\n\nHuman: What i can do with you?\nCloudia: You can ask me questions, we can talk about a lot of things. Why don't you tell me how the day went?\n\nHuman: How many times i can talk with you?\nCloudia: You can talk with me how many times you want, but you will receive a reward only for the first two times.\n\nHuman: What i need to do in order to obtain the reward?\nCloudia: You need to talk with me for at least 10 minutes, it wont be hard, i hope."
-start_fsession_message = "Cloudia: Hello, Alessio I am Cloudia, the first bot that will make you talk during work hours! By talking with me you'll get some rewards, also you'll help your company to build the best possible enviroment to work on! In fact every data collected will be used by your employers to improve the life quality at the company, so don't worry, you can share everything with me!"
-start_chat_lol_fsession = "Cloudia: Hello, Alessio I am Cloudia, the first bot that will make you talk during work hours! By talking with me you'll get some rewards, also you'll help your company to build the best possible enviroment to work on! In fact every data collected will be used by your employers to improve the life quality at the company, so don't worry, you can share everything with me!\n\nHuman: What you are used to?\nCloudia: We will talk together about everything, later your data can be seen only by your employer\n\nHuman: What i get by talking with you?\nCloudia: By talking with me for 3 minutes you'll earn a coin. Later you can spend the coin to speel the wheel and win some prizes!\n\nHuman: How many times can i talk to you?\nCloudia: You can talk with me as many times as you like, but you'll earn the coins only twice every day."
+start_chat_log = "Cloudia: Hello, I am Cloudia, the first bot that will make you talk during work hours!\n\nHuman: What i can do with you?\nCloudia: You can ask me questions, we can talk about a lot of things. Why don't you tell me how the day went?\n\nHuman: How many times i can talk with you?\nCloudia: You can talk with me how many times you want, but you will receive a reward only for the first two times.\n\nHuman: What i need to do in order to obtain the reward?\nCloudia: You need to talk with me for at least 10 minutes, it wont be hard, i hope."
 
 restart_conversation_phrase_not_understood = ["I am sorry but I didn't understand. By the way, let's change topic! ",
                                               "Oh, I think i didn't understand what you mean, but it is fine, we can talk about it "
@@ -44,7 +41,7 @@ async def ask(question, employee_id, session, chat_log=None, ):
     if len(story) <= 1 or re.search("I didn't understand", story, re.IGNORECASE):
         answer = await keep_conversation_alive(employee_id, session)
         return f'{restart_conversation_phrase_not_understood[random.randint(0, len(restart_conversation_phrase_not_understood) - 1)]} {answer}'
-    if '?' not in story:
+    if '?' not in story and not (re.search("talk", story, re.IGNORECASE) or re.search("discuss", story, re.IGNORECASE)):
         question = await keep_conversation_alive(employee_id, session)
         return f"{story}  {restart_conversation_phrase_no_question[random.randint(0, len(restart_conversation_phrase_no_question) - 1)]} {question}"
 

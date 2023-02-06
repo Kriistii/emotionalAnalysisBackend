@@ -12,7 +12,10 @@ from ..utilityFunctions import *
 from ..models import ChatSessionMessage, ChatSession
 from ..serializers import ChatSessionMessageSerializer
 from moviepy.editor import *
+import environ
 from asgiref.sync import sync_to_async
+
+env = environ.Env()
 
 
 def mergeAndAnalyzeVideo(session_id):
@@ -45,17 +48,11 @@ def save_video(session_id, video_file, name):
 
 def analyze_video(identifier):
     # get paths, for video processing
-    print("Ciao")
     video_path = default_storage.path('tmp/{}/full_video.webm'.format(identifier))
-    openface_path = default_storage.path('OpenFace')
     csv_path = default_storage.path(f'tmp/{identifier}/csv')
     os.makedirs(os.path.dirname(csv_path), exist_ok=True)
-
-    string = '/stressWork/'
-    splitResult = openface_path.split(string)
-    print(splitResult)
-    mac_add = '/build/bin' #add this to path when running it in mac
-    final_openface_path = splitResult[0] + '/' + splitResult[1] + mac_add
+    openFaceExecPath = env('OPEN_FACE_EXEC_PATH')
+    print(openFaceExecPath)
 
     video = VideoFileClip(video_path)
     duration = video.duration
@@ -72,9 +69,8 @@ def analyze_video(identifier):
         clip = video.subclip(start, end)
         clip.write_videofile(path_video)
         # split video in 1s videos
-        # subprocess.run(f" ffmpeg -i {video_path} -ss  00:00:{startString} -to  00:00:{endString} -c copy {path_video}", shell=True)
         # run video analysis for each video
-        subprocess.call(f' {final_openface_path}/FeatureExtraction -f {path_video} -aus -out_dir {csv_path} ',
+        subprocess.call(f' {openFaceExecPath} -f {path_video} -aus -out_dir {csv_path} ',
                         shell=True)
 
         # emotion analysis

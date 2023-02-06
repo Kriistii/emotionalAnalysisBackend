@@ -432,7 +432,6 @@ class RetrieveChatSessionsEmployee(APIView):
             return Response({"chats": chats})
 
 class RetrieveChatLogsEmployee(APIView):
-    permission_classes = (IsAuthenticated,)
 
     def post(self, request):
         chat_id = request.data.get('chat_id', None)
@@ -483,15 +482,16 @@ class InteractionDetailsAPIView(APIView):
             serializerChat['hasGraph'] = True
             data = read_csv("tmp/{}/video_analysis.csv".format(chat_id))
 
-            hp = data['hp'].tolist()
-            fr = data['fr'].tolist()
-            an = data['an'].tolist()
-            sd = data['sd'].tolist()
-            sr = data['sr'].tolist()
+            hp = data['hp']
+            fr = data['fr']
+            an = data['an']
+            sd = data['sd']
+            sr = data['sr']
 
-            print(data)
+            maximum_score = max(hp.max(), fr.max(),an.max(), sd.max(), sr.max())
 
-            csv_results = {'Happiness': hp, 'Fear': fr, 'Anger': an, 'Sadness': sd, 'Surprise': sr, 'length_conversation': len(data.index)}
+            csv_results = {'Happiness': hp.tolist(), 'Fear': fr.tolist(), 'Anger': an.tolist(), 'Sadness': sd.tolist(), 'Surprise': sr.tolist(),
+                           'length_conversation': len(data.index), 'maximum_emotion_score': maximum_score}
         else:
             serializerChat['hasGraph'] = False
 

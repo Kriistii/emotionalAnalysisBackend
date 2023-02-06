@@ -5,7 +5,7 @@ db.sqlite3
 *.env
 .vscode
 .idea
-/stressWork/tmp
+/stressWork/tmp/*
 /stressWork/content
 /OpenFace
 /stressWork/employee/migrations/
