@@ -1,6 +1,3 @@
-To run the scheduler onlhy once, execute the following command:
-python manage.py runserver --noreload
-
 # Advanced User Interface - Stress@Work
 
 ## Build Setup
@@ -48,7 +45,8 @@ MODEL_PATH=<path_to_pretrained_model_folder>
 You can now start the backend server by running the command
 
 ```bash
-$ python manage.py runserver
+# Starting using --noreload to avoid repetition on scheduler
+$ python manage.py runserver --noreload
 ```
 
 ## Documentation
