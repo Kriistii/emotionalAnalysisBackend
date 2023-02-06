@@ -3,32 +3,37 @@
         "model" : "employee.Emotion",
         "pk" : 1,
         "fields" : {
-            "emotion_name" : "an"
+            "emotion_name" : "an",
+            "extended_name": "Anger"
         }
     },
-    ,{
+    {
         "model" : "employee.Emotion",
         "pk" : 2,
         "fields" : {
-            "emotion_name" : "fr"
+            "emotion_name" : "fr",
+            "extended_name": "Fear"
         }
     },{
         "model" : "employee.Emotion",
         "pk" : 3,
         "fields" : {
-            "emotion_name" : "hp"
+            "emotion_name" : "hp",
+            "extended_name": "Happiness"
         }
     },{
         "model" : "employee.Emotion",
         "pk" : 4,
         "fields" : {
-            "emotion_name" : "sd"
+            "emotion_name" : "sd",
+            "extended_name": "Sadness"
         }
     },{
         "model" : "employee.Emotion",
         "pk" : 5,
         "fields" : {
-            "emotion_name" : "sr"
+            "emotion_name" : "sr",
+            "extended_name": "Surprise"
         }
     }
 ]
