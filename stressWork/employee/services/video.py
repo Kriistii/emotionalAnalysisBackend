@@ -98,7 +98,6 @@ def csvProcessing2(session_id, csv_name):
             if (i == 0):
                 for element1 in row:
                     if ("_r" in element1):
-                        print(element1)
                         headArray.append(element1)
                 fullFinal.append(headArray)
             else:

@@ -178,7 +178,7 @@ class GetUserInteractions(APIView):
     def get(self, request, employee_id):
         # query = "SELECT id, date, first_prevailing_emotion FROM chatsession WHERE employee=%d ORDER BY date DESC"
 
-        result = ChatSession.objects.filter(employee=employee_id).order_by("-date")
+        result = ChatSession.objects.filter(employee=employee_id, analyzed=True).order_by("-date")
         serializer = ChatSessionSerializer(result, many=True).data
 
         for s in serializer:

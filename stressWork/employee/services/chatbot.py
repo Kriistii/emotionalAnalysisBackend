@@ -17,7 +17,7 @@ restart_conversation_phrase_not_understood = ["I am sorry but I didn't understan
                                               "later. Let's change subject for the moment! "]
 
 restart_conversation_phrase_no_question = [
-    "I am sorry to be rude, but what you think about we change topic? I would like to know more about you! ", "I see that this subject is really interesting for you, but I am not an expert. What you think about if i ask you one question, so I start to know you better! " ]
+    "I am sorry to be rude, but what you think about we change topic? I would like to know more about you! ", "I see that this subject is really interesting for you, but I am not an expert. What you think about if I ask you one question, so I start to know you better! " ]
 
 
 async def ask(question, employee_id, session, chat_log=None, ):
