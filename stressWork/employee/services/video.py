@@ -93,14 +93,15 @@ def csvProcessing2(session_id, csv_name):
         fullFinal = []
         headArray = []
         reader = csv.reader(file)
-        columns = pd.read_csv(file).columns
-        for col in columns:
-            if "_r" in col:
-                headArray.append()
-        fullFinal.append((columns))
         for i, row in enumerate(reader):
             final = []
-            if(i == 1):
+            if (i == 0):
+                for element1 in row:
+                    if ("_r" in element1):
+                        print(element1)
+                        headArray.append(element1)
+                fullFinal.append(headArray)
+            else:
                 for index, element in enumerate(row):
                     # get all fu values, only the ones with probability > 0.7
                     if 5 <= index <= 21:
