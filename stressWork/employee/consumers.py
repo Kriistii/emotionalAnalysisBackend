@@ -66,8 +66,8 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                 predict = web_model.predict([(topic['name'], text)])
 
                 if predict <= 1:
-                    response = json.dumps({"answer_chatbot": "Please answer to the question I made to you in a clear way.",
-                         "question": text, "type": type})
+                    answer = "Please answer to the question I made to you in a clear way."
+                    response = json.dumps({"answer_chatbot": answer, "question": text, "type": type})
                 else:
                     await chatbot.addNewEmployeeTopic(topic['id'], employee_id, text)
                     answer = await chatbot.compute_answer(session, text, employee_id)

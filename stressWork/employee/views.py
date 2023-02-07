@@ -416,7 +416,7 @@ class TimeChatOverEmployee(APIView):
                 employee.save()
                 return Response({"text1": "Congratulations, we just talked for 3 minutes! I just added one coin "
                                           "to your balance to thank you for the time you spent talking with me. You will be able to "
-                                          "see it when the chat is over. "
+                                          "see it when you close the chat using the X on the top right! "
                                     , "text2": "You can now stop the chat or continue "
                                                "talking with me!", "coin": True})
         else:
@@ -463,7 +463,7 @@ class CheckCoins(APIView):
         if user_id is not None:
             user = Employee.objects.get(pk=user_id)
             if user.coins == 0:
-                return Response("Non enough coins", 500)
+                return Response("Non enough coins", 403)
             return Response("The user has enough coins to play")
 
 

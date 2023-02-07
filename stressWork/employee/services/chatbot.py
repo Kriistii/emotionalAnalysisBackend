@@ -52,23 +52,19 @@ def append_interaction_to_chat_log(question, answer, chat_log=None):
     return f'{chat_log}{restart_sequence} {question}{start_sequence}{answer}'
 
 
-@sync_to_async
-def keep_conversation_alive(emp_id, session):
-    employee_topics = EmployeeTopicSerializer((EmployeeTopic.objects.filter(employee=emp_id)), many=True).data
-    employee_topics_id_list = []
-    for emp_topic in employee_topics:
-        employee_topics_id_list.append(emp_topic['topic_id'])
-    topics = TopicSerializer((Topic.objects.exclude(
-        id__in=employee_topics_id_list)), many=True).data
+async def keep_conversation_alive(emp_id, session):
+    empl_topics, empl_topics_id_lists = await getListOfAnsweredTopics(emp_id)
+    topics = await getTopicsNotAnswered(empl_topics_id_lists)
     if len(topics) > 0:
         selected_topic = topics[random.randint(0, len(topics) - 1)]
         session['topic'] = {
             'id': selected_topic['id'], 'name': selected_topic['name']}
         session['topicQuestion'] = True
+        print(selected_topic['start_question'])
         return selected_topic['start_question']
-    elif len(employee_topics_id_list) > 0:
-        subject = employee_topics[random.randint(0, len(employee_topics) - 1)]
-        answer = compute_answer(
+    elif len(empl_topics_id_lists) > 0:
+        subject = empl_topics[random.randint(0, len(empl_topics) - 1)]
+        answer = await compute_answer(
             session, f'Ask me a question about {subject["answer"]}', emp_id)
         return answer
 
@@ -80,12 +76,24 @@ async def compute_answer(session, question, employee_id):
     answer = await ask(question, employee_id, session, chat_log)
     session['chat_log'] = append_interaction_to_chat_log(
         question, answer, chat_log)
-    # TODO save the question and the answer somewhere
     return answer
 
 
 @sync_to_async
 def addNewEmployeeTopic(topic_id, employee_id, answer):
-    EmployeeTopic.objects.create(topic=Topic(pk=topic_id), employee=Employee(pk=employee_id),
+    topic = EmployeeTopic.objects.create(topic=Topic(pk=topic_id), employee=Employee(pk=employee_id),
                                  answer=answer)
-    return
+    topic.save()
+
+@sync_to_async
+def getListOfAnsweredTopics(emp_id):
+    employee_topics = EmployeeTopicSerializer((EmployeeTopic.objects.filter(employee=emp_id)), many=True).data
+    employee_topics_id_list = []
+    for emp_topic in employee_topics:
+        employee_topics_id_list.append(emp_topic['topic_id'])
+    return employee_topics, employee_topics_id_list
+@sync_to_async
+def getTopicsNotAnswered(empl_topic_lists):
+    topics = TopicSerializer((Topic.objects.exclude(
+        id__in=empl_topic_lists)), many=True).data
+    return topics
