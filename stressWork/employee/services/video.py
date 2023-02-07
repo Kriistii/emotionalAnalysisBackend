@@ -93,18 +93,14 @@ def csvProcessing2(session_id, csv_name):
         fullFinal = []
         headArray = []
         reader = csv.reader(file)
+        columns = pd.read_csv(file).columns
+        for col in columns:
+            if "_r" in col:
+                headArray.append()
+        fullFinal.append((columns))
         for i, row in enumerate(reader):
             final = []
-            if (i == 0):
-                for element1 in row:
-                    if ("_r" in element1):
-                        print(element1[2:4])
-                        print(element1[1:4])
-                        # save units to head array (only the unit number)
-                        headArray.append(element1[2:4])
-
-                fullFinal.append(headArray)
-            else:
+            if(i == 1):
                 for index, element in enumerate(row):
                     # get all fu values, only the ones with probability > 0.7
                     if 5 <= index <= 21:
@@ -116,12 +112,12 @@ def csvProcessing2(session_id, csv_name):
 
 def findEmotionsPerFrame2(fuArrayFrames):
     # fu for emotions
-    anger = ['04', '05', '07', '10', '17', '22', '23', '24', '25', '26']
-    disgust = ['09', '10', '16', '17', '25', '26']
-    fear = ['01', '02', '04', '05', '20', '25', '26', '27']
-    happiness = ['06', '12', '25']
-    sadness = ['01', '04', '06', '11', '15', '17']
-    surprise = ['01', '02', '05', '26', '27']
+    anger = ['AU04_r', 'AU05_r', 'AU07_r', 'AU10_r', 'AU17_r', 'AU22_r', 'AU23_r', 'AU24_r', 'AU25_r', 'AU26_r']
+    disgust = ['AU09_r', 'AU10_r', 'AU16_r', 'AU17_r', 'AU25_r', 'AU26_r']
+    fear = ['AU01_r', 'AU02_r', 'AU04_r', 'AU05_r', 'AU20_r', 'AU25_r', 'AU26_r', 'AU27_r']
+    happiness = ['AU06_r', 'AU12_r', 'AU25_r']
+    sadness = ['AU01_r', 'AU04_r', 'AU06_r', 'AU11_r', 'AU15_r', 'AU17_r']
+    surprise = ['AU01_r', 'AU02_r', 'AU05_r', 'AU26_r', 'AU27_r']
 
     finalEmotionPoints = []
     angerPointsArray = []
