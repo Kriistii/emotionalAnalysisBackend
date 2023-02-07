@@ -98,8 +98,11 @@ def csvProcessing2(session_id, csv_name):
             if (i == 0):
                 for element1 in row:
                     if ("_r" in element1):
+                        print(element1[2:4])
+                        print(element1[1:4])
                         # save units to head array (only the unit number)
                         headArray.append(element1[2:4])
+
                 fullFinal.append(headArray)
             else:
                 for index, element in enumerate(row):
