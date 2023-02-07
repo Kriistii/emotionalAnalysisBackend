@@ -89,10 +89,10 @@ def analyze_video(identifier):
 
 
 def csvProcessing2(session_id, csv_name):
-    with open(default_storage.path('tmp/{}/csv/{}.csv'.format(session_id, csv_name))) as file:
+    with open(default_storage.path('tmp/{}/csv/{}.csv'.format(session_id, csv_name)), newline="") as file:
         fullFinal = []
         headArray = []
-        reader = csv.reader(file)
+        reader = csv.reader(file, skipinitialspace=True)
         for i, row in enumerate(reader):
             final = []
             if (i == 0):
