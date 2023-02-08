@@ -5,7 +5,7 @@ from ..models import EmployeeTopic, Topic, Employee
 from ..serializers import TopicSerializer, EmployeeTopicSerializer
 from asgiref.sync import sync_to_async
 
-openai.api_key = "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"
+openai.api_key = "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"
 completion = openai.Completion()
 
 start_sequence = "\nCloudia:"
