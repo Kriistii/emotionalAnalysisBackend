@@ -1,9 +1,10 @@
 # Advanced User Interface - Stress@Work
 
 ## Build Setup
+You need to have python3-dev installed as pre-requisites.
 
 First of all you need to create a virtualenv for the project, to do so we will
-use [python](https://www.python.org/downloads/) and [virtualenv](https://pypi.org/project/virtualenv/).
+use [python3.10](https://www.python.org/downloads/) and [virtualenv](https://pypi.org/project/virtualenv/).
 
 ```bash
 # Create the virtual env and use it
@@ -11,7 +12,7 @@ $ virtualenv .venv
 $ source .venv/bin/activate
 
 #Install the project requirements
-$ pip install -r requirements.txt
+$ pip install -r requirements.txt --no-cache-dir
 ```
 
 You will also need to set up the database, go in /stressWork/stressWork/settings.py and adjust your settings based on the database you will use.
