@@ -4,6 +4,9 @@ from ..models import ChatSessionMessage, ChatSession
 import json
 from asgiref.sync import sync_to_async
 import os
+import nltk
+nltk.download('omw-1.4')
+
 from datetime import datetime
 
 

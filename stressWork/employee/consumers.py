@@ -38,47 +38,15 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         audio_path = None
         type = None
         try:
-            if text_data:
-                type = 'text'
-                message = json.loads(text_data)
-                text = message['data']
-                answer = await (chatbot.compute_answer(session, text, employee_id))
-                response = json.dumps({"answer_chatbot": answer, "question": text, "type": type})
             if bytes_data:
                 kind = filetype.guess(bytes_data)
-                if kind.extension == 'wav':
-                    type = 'media'
-                    audio_file = bytes_data
-                    audio_path = audio.save_audio(chat_session_id, audio_file, name) #add path to return of save audio
-                    text = audio.speech_to_text(chat_session_id, name)
-                    answer = await chatbot.compute_answer(session, text, employee_id)
-                    response = json.dumps({"answer_chatbot": answer, "question": text, "type": type})
-                elif kind.extension == 'mkv':
-                    type = 'media'
-                    video_file = bytes_data
-                    video_path = video.save_video(chat_session_id, video_file, name)
-                    audio_path = audio.video_to_audio(chat_session_id, name)
-                    text = audio.speech_to_text(chat_session_id, name)
-                    answer = await chatbot.compute_answer(session, text, employee_id)
-                    response = json.dumps({"answer_chatbot": answer, "question": text, "type": type})
-            if session.get('topicAnswer', None):
-                topic = session['topic']
-                predict = web_model.predict([(topic['name'], text)])
-
-                if predict <= 1:
-                    answer = "Please answer to the question I made to you in a clear way."
-                    response = json.dumps({"answer_chatbot": answer, "question": text, "type": type})
-                else:
-                    await chatbot.addNewEmployeeTopic(topic['id'], employee_id, text)
-                    answer = await chatbot.compute_answer(session, text, employee_id)
-                    response = json.dumps(
-                        {"answer_chatbot": answer,
-                         "question": text, "type": type})
-                    del session['topicAnswer']
-                    del session['topic']
-            if session.get('topicQuestion', None):
-                session['topicAnswer'] = True
-                del session['topicQuestion']
+                type = 'media'
+                video_file = bytes_data
+                video_path = video.save_video(chat_session_id, video_file, name)
+                audio_path = audio.video_to_audio(chat_session_id, name)
+                text = audio.speech_to_text(chat_session_id, name)
+                answer = await chatbot.compute_answer(session, text, employee_id)
+                response = json.dumps({"answer_chatbot": answer, "question": text, "type": type})
             await chat.createChatSessionMessage(chat_session_id, text, answer, audio_path, video_path)
             await self.send(response)
 
