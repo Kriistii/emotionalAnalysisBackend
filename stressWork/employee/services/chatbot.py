@@ -1,7 +1,7 @@
 import openai
 import random
 import re
-from ..models import EmployeeTopic, Topic, Employee
+from ..models import  Employee
 from ..serializers import TopicSerializer, EmployeeTopicSerializer
 from asgiref.sync import sync_to_async
 

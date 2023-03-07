@@ -9,7 +9,6 @@ import cv2
 import os
 import shutil
 from ..utilityFunctions import *
-from ..models import ChatSessionMessage, ChatSession
 from ..serializers import ChatSessionMessageSerializer
 from moviepy.editor import *
 import environ

@@ -1,5 +1,5 @@
 from asgiref.sync import sync_to_async
-from ..models import Employee, ChatSession, ChatSessionMessage
+from ..models import Employee
 from ..serializers import *
 from ..scheduler import *
 from datetime import datetime

@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 from apscheduler.schedulers.background import BackgroundScheduler
 from django.db.models import Count
 
-from .models import Employee, StressRecord, ChatSession, Emotion
+from .models import Employee, StressRecord, Emotion
 from .serializers import ChatSessionSerializer
 from .services import text_service, audio, video
 
