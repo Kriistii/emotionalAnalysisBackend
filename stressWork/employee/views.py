@@ -153,19 +153,20 @@ class NewSession(APIView):
 
     def post(self, request):
         name = uuid.uuid4()
-        session_id = 1
         request_id = 1
         employee_id = request.data.get('employee_id', None)
-        text = ''
         response = Response("Error")
         if request.FILES.get('video-blob', None):
+            newSession = session.createSession(employee_id, request_id)
+            session_id = newSession.id
             video_file = request.FILES['video-blob']
             video_path = video.save_video(session_id, video_file, name)
             audio_path = audio.video_to_audio(session_id, name)
             text = audio.speech_to_text(session_id, name)
-            print(text)
-            new = session.createSession(employee_id, request_id, video_path, audio_path, text)
-            print(new)
+            newSession.full_video_path = video_path
+            newSession.full_audio_path = audio_path,
+            newSession.text = text
+            newSession.save()
             return Response("Success")
         return response
 

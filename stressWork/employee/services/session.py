@@ -5,10 +5,9 @@ from ..scheduler import *
 from datetime import datetime
 
 
-def createSession(employee_id, request_id, video_path, audio_path, text_path):
+def createSession(employee_id, request_id):
     session = Session(employee=Employee(pk=employee_id), request=Request(pk=request_id),
-                      date=datetime.now(), full_video_path=video_path, full_audio_path=audio_path,
-                      text=text_path)
+                      date=datetime.now())
     session.save()
     return session
 
