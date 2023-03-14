@@ -4,8 +4,8 @@ from datetime import datetime, timedelta
 from apscheduler.schedulers.background import BackgroundScheduler
 from django.db.models import Count
 
-from .models import Employee, StressRecord, ChatSession, Emotion
-from .serializers import ChatSessionSerializer
+from .models import Employee, StressRecord, Emotion, Session
+from .serializers import SessionSerializer
 from .services import text_service, audio, video
 
 scheduler = BackgroundScheduler()
@@ -22,8 +22,8 @@ def save_data():
         stressRecord.save()
 
 def run_analysis():
-    chat = ChatSession.objects.filter(analyzed=False, completed=True).order_by('date')
-    chatSerialized = ChatSessionSerializer(chat, many=True).data
+    chat = Session.objects.filter(analyzed=False, completed=True).order_by('date')
+    chatSerialized = SessionSerializer(chat, many=True).data
     if len(chatSerialized):
         weigthText = 0.333
         weigthAudio = 0.333
@@ -51,7 +51,7 @@ def run_analysis():
         sum_emotions_ordered = sorted(sum_emotions.items(), key=lambda x: x[1], reverse=True)
         first_emotion = sum_emotions_ordered[0]
         second_emotion = sum_emotions_ordered[1]
-        c = ChatSession.objects.get(pk=chatId)
+        c = Session.objects.get(pk=chatId)
 
         if float(first_emotion[1]) / 2 > float(second_emotion[1]):
             c.first_prevailing_emotion = Emotion.objects.get(emotion_name=first_emotion[0])
@@ -74,7 +74,7 @@ def stressAnalysis(employee_id):
 
     #Logic
     emp = Employee.objects.get(pk=employee_id)
-    chats = ChatSessionSerializer(ChatSession.objects.filter(employee=emp, completed=True, date__range=(datetime.now() - timedelta(days=15), datetime.now())).order_by('-date'), many=True).data
+    chats = SessionSerializer(Session.objects.filter(employee=emp, completed=True, date__range=(datetime.now() - timedelta(days=15), datetime.now())).order_by('-date'), many=True).data
     analyzed_dates = []
     for c in chats:
         date = datetime.strptime(c['date'], '%Y-%m-%dT%H:%M:%S.%fZ').date()
@@ -112,7 +112,7 @@ def stressAnalysis(employee_id):
 
 def startScheduler():
     # run this job every 24 hours
-    scheduler.add_job(run_analysis, 'interval', minutes=1, name='run_analysis', jobstore='default')
+    scheduler.add_job(run_analysis, 'interval', days=1, name='run_analysis', jobstore='default')
     scheduler.add_job(save_data, 'interval', hours=24, name='save_data', jobstore='default')
     scheduler.start()
     print("Scheduler started...", file=sys.stdout)
