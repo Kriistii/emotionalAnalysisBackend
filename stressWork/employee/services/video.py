@@ -39,8 +39,8 @@ def mergeAndAnalyzeVideo(session_id):
 
 def save_video(session_id, video_file, name):
     path = 'tmp/{}/videos/{}.webm'.format(session_id, name)
-    with safe_open(path, 'wb') as binary_file:
-        binary_file.write(video_file)
+    default_storage.save(
+        path, ContentFile(video_file.read()))
     return path
 
 

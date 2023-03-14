@@ -152,7 +152,6 @@ class NewSession(APIView):
     permission_classes = (IsAuthenticated,)
 
     def post(self, request):
-        print(request)
         name = uuid.uuid4()
         session_id = 1
         request_id = 1
@@ -164,7 +163,10 @@ class NewSession(APIView):
             video_path = video.save_video(session_id, video_file, name)
             audio_path = audio.video_to_audio(session_id, name)
             text = audio.speech_to_text(session_id, name)
-            session.createSession(session_id, employee_id, request_id, video_path, audio_path, text)
+            print(text)
+            new = session.createSession(employee_id, request_id, video_path, audio_path, text)
+            print(new)
+            return Response("Success")
         return response
 
 class CreateEmployeeAPIView(APIView):
