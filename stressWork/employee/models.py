@@ -107,7 +107,7 @@ class Session(models.Model):
                                                   on_delete=models.DO_NOTHING)
     full_video_path = models.CharField(max_length=200, null=True)
     full_audio_path = models.CharField(max_length=200, null=True)
-    full_conversation_path = models.TextField(null=True)
+    text = models.TextField(null=True, max_length=10000)
     analyzed = models.BooleanField(default=False)
     completed = models.BooleanField(default=False)
 

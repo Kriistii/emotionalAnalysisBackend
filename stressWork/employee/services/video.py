@@ -9,7 +9,6 @@ import cv2
 import os
 import shutil
 from ..utilityFunctions import *
-from ..serializers import ChatSessionMessageSerializer
 from moviepy.editor import *
 import environ
 from asgiref.sync import sync_to_async

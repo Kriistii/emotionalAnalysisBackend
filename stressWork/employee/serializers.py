@@ -5,7 +5,7 @@ from dj_rest_auth.serializers import UserDetailsSerializer
 class EmployeeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Employee
-        fields = ['id', 'name', 'surname', 'birthday', 'stressed', 'firstSession', 'company', 'user', 'coins']
+        fields = ['id', 'name', 'surname', 'birthday', 'stressed', 'company', 'user']
 
 
 class EmployerSerializer(serializers.ModelSerializer):
@@ -19,36 +19,10 @@ class StressRecordSerializer(serializers.ModelSerializer):
         model = StressRecord
         fields = ['date', 'stressedUsers']
 
-
-class EmployeeTopicSerializer(serializers.ModelSerializer):
-    class Meta:
-        fields = ['id', 'topic_id', 'employee', 'answer']
-
-
-class TopicSerializer(serializers.ModelSerializer):
-    class Meta:
-        fields = ['id', 'name', 'start_question']
-
-
-class PrizeSerializer(serializers.ModelSerializer):
-    class Meta:
-        fields = ['id', 'name', 'description', 'rare', 'wheel']
-
-
-class WheelSerializer(serializers.ModelSerializer):
-    class Meta:
-        fields = ['id', 'company']
-
-
 class AppUsersSerializer(serializers.ModelSerializer):
     class Meta:
         model = AppUsers
         fields = ['id', 'email']
-
-
-class ChatSessionMessageSerializer(serializers.ModelSerializer):
-    class Meta:
-        fields = ['date', 'video_url', 'audio_url', 'text', 'chatbot_answer', 'date']
 
 
 class EmotionsSerializer(serializers.ModelSerializer):
@@ -56,9 +30,9 @@ class EmotionsSerializer(serializers.ModelSerializer):
         model = Emotion
         fields = ['id', 'emotion_name', 'extended_name']
 
-class ChatSessionSerializer(serializers.ModelSerializer):
+class SessionSerializer(serializers.ModelSerializer):
     class Meta:
-        fields = ['id', 'employee', 'date', 'first_prevailing_emotion', 'second_prevailing_emotion', 'full_conversation_path', "full_video_path", "full_audio_path", 'analyzed', 'completed']
+        fields = ['id', 'employee', 'date', 'request', 'analyzed']
 
 
 

@@ -1,10 +1,9 @@
 import django
 from django.db.models import Max
-from django.utils import connection
 
 from .serializers import *
 from .models import *
-from .services import audio, chatbot, video
+from .services import audio, video, session
 import uuid
 from datetime import datetime, timedelta
 from semantic_text_similarity.models import WebBertSimilarity
@@ -21,7 +20,6 @@ from django.core.files.storage import default_storage
 from pandas import *
 
 import json
-import csv
 
 
 class EmployeeStatsAPIView(APIView):
@@ -56,74 +54,6 @@ class NewEmployee(APIView):
             return Response(status=status.HTTP_201_CREATED)
 
         return Response(data=serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-class NewWheel(APIView):
-    def post(self, request):
-        request.data['company'] = request.session['companyId']
-
-        print(request.data['company'])
-
-        serializer = WheelSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(status=status.HTTP_201_CREATED)
-
-        return Response(data=serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-class DelWheel(APIView):
-    def post(self, request, wheel_id):
-        Wheel.objects.get(id=wheel_id).delete()  # TODO: add checks?
-
-        return Response(status=status.HTTP_200_OK)
-
-
-class GetWheels(APIView):
-    def get(self, request):
-        wheels = Wheel.objects.filter(company_id=request.session['companyId'])
-        serializer = WheelSerializer(wheels, many=True)
-
-        return Response(serializer.data)
-
-
-class NewPrize(APIView):
-    def post(self, request, wheel_id):
-        request.data['wheel'] = wheel_id
-
-        serializer = PrizeSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(data=serializer.data)
-
-        return Response(data=serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-class EditPrize(APIView):
-    def post(self, request, prize_id):
-        prize = Prize.objects.get(id=prize_id)
-        prize.name = request.data['name']
-        prize.description = request.data['description']
-        prize.rare = request.data['rare']
-
-        prize.save()
-
-        return Response(status=status.HTTP_200_OK)
-
-
-class DelPrize(APIView):
-    def post(self, request, prize_id):
-        Prize.objects.filter(id=prize_id).delete()  # TODO: add checks?
-
-        return Response(status=status.HTTP_200_OK)
-
-
-class GetPrizes(APIView):
-    def get(self, request, wheel_id):
-        prizes = Prize.objects.filter(wheel_id=wheel_id)
-        serializer = PrizeSerializer(prizes, many=True)
-
-        return Response(serializer.data)
 
 
 class StressStats(APIView):
@@ -218,74 +148,24 @@ class EmployeeDetailAPIView(APIView):
         return Response(data=serializer.data, status=status.HTTP_200_OK)
 
 
-class NewRecordAPIView(APIView):
+class NewSession(APIView):
     permission_classes = (IsAuthenticated,)
 
-    def post(self, request, employee_id):
+    def post(self, request):
+        print(request)
         name = uuid.uuid4()
+        session_id = 1
+        request_id = 1
+        employee_id = request.data.get('employee_id', None)
         text = ''
         response = Response("Error")
         if request.FILES.get('video-blob', None):
             video_file = request.FILES['video-blob']
-            video.save_video(video_file, name)
-            video.analyze_video(name)
-            audio.video_to_audio(name)
-            text = audio.speech_to_text(name)
-            answer = chatbot.compute_answer(request, text, employee_id)
-            response = Response({"answer_chatbot": answer, "question": text})
-
-        if request.FILES.get('audio-blob', None):
-            audio_file = request.FILES['audio-blob']
-            audio.save_audio(audio_file, name)
-            # audio.analyze_audio(name)
-            text = audio.speech_to_text(name)
-            answer = chatbot.compute_answer(request, text, employee_id)
-            response = Response({"answer_chatbot": answer, "question": text})
-
-        if request.POST.get('text', None):
-            text = request.POST['text']
-            # analyzeText(text)
-            answer = chatbot.compute_answer(request, text, employee_id)
-            response = Response({"answer_chatbot": answer, "question": text})
-
-        print(request.session.get('topicAnswer', None))
-        if request.session.get('topicAnswer', None):
-            topic = request.session['topic']
-            # TODO Analyz the answer wrt of the topic and save the answer in the database
-            predict = web_model.predict([(topic['name'], text)])
-
-            if predict <= 1:
-                response = Response(
-                    {"answer_chatbot": "Please answer to the question I made to you in a clear way.", "question": text})
-            else:
-                EmployeeTopic.objects.create(topic=Topic(pk=topic['id']), employee=Employee(pk=employee_id),
-                                             answer=text)
-                answer = chatbot.compute_answer(request, text, employee_id)
-                response = Response({"answer_chatbot": answer, "question": text})
-                del request.session['topicAnswer']
-                del request.session['topic']
-
-        if request.session.get('topicQuestion', None):
-            request.session['topicAnswer'] = True
-            del request.session['topicQuestion']
-        print(request.session.get('topicAnswer', None))
-
+            video_path = video.save_video(session_id, video_file, name)
+            audio_path = audio.video_to_audio(session_id, name)
+            text = audio.speech_to_text(session_id, name)
+            session.createSession(session_id, employee_id, request_id, video_path, audio_path, text)
         return response
-
-
-class StartChatAPIView(APIView):
-    permission_classes = (IsAuthenticated,)
-
-    def get(self, request, employee_id):
-        e = Employee.objects.get(id=employee_id)
-        employee = EmployeeSerializer(Employee.objects.get(id=employee_id))
-        if employee['firstSession']:
-            return chatbot.start_fsession_message
-        else:
-            e.firstSession = False
-            e.save()
-            return chatbot.start_message
-
 
 class CreateEmployeeAPIView(APIView):
     # TODO request filter
@@ -313,6 +193,17 @@ class CreateEmployeeAPIView(APIView):
 
         employee.save()
         return Response("Ok")
+class CreateRequestAPIView(APIView):
+    # TODO request filter
+    def post(self, request):
+        if request.POST.get('text', None):
+            textField = request.POST['text']
+            request = Request.objects.create(text=textField, created_at=datetime.now(), created_by=request.user.id)
+            request.save()
+            return Response("Ok")
+
+        return Response("Error")
+
 
 class CreateEmployerAPIView(APIView):
     def post(self, request):
@@ -345,26 +236,6 @@ class TestVideoAnalysisAPIView(APIView):
         name = 1
         video.analyze_video(name)
         return Response("Ok")
-
-
-class CloseChatAPIView(APIView):
-    permission_classes = (IsAuthenticated,)
-
-    def get(self, request):
-        chat_log = request.session.get('chat_log', None)
-        topicAnswer = request.session.get('topicAnswer', None)
-        topicQuestion = request.session.get('topicQuestion', None)
-        topic = request.session.get('topic', None)
-        if chat_log is not None:
-            del request.session['chat_log']
-        if topicAnswer is not None:
-            del request.session['topicAnswer']
-        if topicQuestion is not None:
-            del request.session['topicQuestion']
-        if topic is not None:
-            del request.session['topic']
-        # TODO Implement logic to start a cron for analyzing the data
-        return Response("Chat closed")
 
 
 class RetrieveEmployeeInformation(APIView):
@@ -422,13 +293,13 @@ class TimeChatOverEmployee(APIView):
         else:
             return Response("User id not found", status=404)
 
-class RetrieveChatSessionsEmployee(APIView):
+class RetrieveSessionsEmployee(APIView):
     permission_classes = (IsAuthenticated,)
 
     def post(self, request):
         user_id = request.data.get('user_id', None)
         if user_id is not None:
-            chats = ChatSessionSerializer(get_list_or_404(ChatSession.objects.filter(employee=get_object_or_404(Employee, pk=user_id), analyzed=True).order_by("-date")), many=True).data
+            chats = SessionSerializer(get_list_or_404(Session.objects.filter(employee=get_object_or_404(Employee, pk=user_id), analyzed=True).order_by("-date")), many=True).data
             return Response({"chats": chats})
 
 class RetrieveChatLogsEmployee(APIView):
@@ -441,30 +312,6 @@ class RetrieveChatLogsEmployee(APIView):
             f = open(conversation_path)
             logs = json.load(f)
             return Response({"chat": logs, "date": chat_logs['date']})
-
-class SpinTheWheel(APIView):
-    permission_classes = (IsAuthenticated,)
-    def post(self, request):
-        user_id = request.data.get('user_id', None)
-        if user_id is not None:
-            user = Employee.objects.get(pk=user_id)
-            if user.coins == 0:
-                return Response("Non enough coins", 500)
-            user.coins = user.coins - 1
-            user.save()
-            emp_serialized = EmployeeSerializer(user).data
-            return Response({"employee": emp_serialized})
-
-class CheckCoins(APIView):
-    permission_classes = (IsAuthenticated,)
-
-    def post(self, request):
-        user_id = request.data.get('user_id', None)
-        if user_id is not None:
-            user = Employee.objects.get(pk=user_id)
-            if user.coins == 0:
-                return Response("Non enough coins", 403)
-            return Response("The user has enough coins to play")
 
 
 class InteractionDetailsAPIView(APIView):

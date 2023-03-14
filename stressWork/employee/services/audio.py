@@ -17,7 +17,6 @@ from transformers.file_utils import ModelOutput
 from dataclasses import dataclass
 import os
 from ..utilityFunctions import safe_open
-from ..serializers import ChatSessionMessageSerializer
 from moviepy.editor import *
 import environ
 
