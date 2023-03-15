@@ -20,6 +20,7 @@ from django.core.files.storage import default_storage
 from pandas import *
 
 import json
+import random
 
 
 class EmployeeStatsAPIView(APIView):
@@ -54,6 +55,17 @@ class NewEmployee(APIView):
             return Response(status=status.HTTP_201_CREATED)
 
         return Response(data=serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class NewRequest(APIView):
+    def post(self, request):
+        textField = ''
+        if request.POST.get('text', None):
+            textField = request.POST['text']
+        employerId = request.session['employer_id']
+
+        Request.objects.create(text=textField, created_by=employerId, date=datetime.now())
+
+        return Response('Ok')
 
 
 class StressStats(APIView):
@@ -170,6 +182,20 @@ class NewSession(APIView):
             #kot fare
             return Response("Success")
         return response
+
+class CompleteNewRequest(APIView):
+    permission_classes = (IsAuthenticated,)
+
+    def post(self, request):
+        employee_id = request.data.get('employee_id', None)
+        notCompletedRequests = Request.objects.exclude(id__in=
+                               Session.objects.filter(employee_id = employee_id).values_list('request_id', flat=True))
+        max = notCompletedRequests.count() - 1
+        min = 0
+        n = random.randint(min, max)
+        serializer = RequestOnlyTextSerializer(notCompletedRequests[n])
+        print(serializer.data)
+        return Response(serializer.data)
 
 class CreateEmployeeAPIView(APIView):
     # TODO request filter
