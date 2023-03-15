@@ -95,7 +95,7 @@ class Request(models.Model):
 
 class Session(models.Model):
     class Meta:
-        db_table = 'chat_session'
+        db_table = 'session'
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4(), editable=False)
     employee = models.ForeignKey("Employee", on_delete=models.CASCADE)
