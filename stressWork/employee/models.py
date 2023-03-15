@@ -97,7 +97,7 @@ class Session(models.Model):
     class Meta:
         db_table = 'session'
 
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4(), editable=False)
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, unique=True)
     employee = models.ForeignKey("Employee", on_delete=models.CASCADE)
     request = models.ForeignKey("Request", on_delete=models.CASCADE)
     date = models.DateTimeField()
@@ -123,6 +123,7 @@ class Questionnaire(models.Model):
 
     emotion = models.ForeignKey("Emotion", on_delete=models.CASCADE)
     request = models.ForeignKey("Request", on_delete=models.CASCADE)
+    employee = models.ForeignKey("Employee", on_delete=models.CASCADE)
     score = models.IntegerField(null=True)
     objects = models.Manager()
 
