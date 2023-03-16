@@ -165,7 +165,7 @@ class NewSession(APIView):
 
     def post(self, request):
         name = uuid.uuid4()
-        request_id = 1
+        request_id = request.data.get('request_id', None)
         employee_id = request.data.get('employee_id', None)
         response = Response("Error")
         if request.FILES.get('video-blob', None):

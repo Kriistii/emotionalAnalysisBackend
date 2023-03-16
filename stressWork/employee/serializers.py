@@ -41,7 +41,7 @@ class RequestSerializer(serializers.ModelSerializer):
 class RequestOnlyTextSerializer(serializers.ModelSerializer):
     class Meta:
         model = Request
-        fields = [ 'text']
+        fields = [ 'id','text']
 
 
 
