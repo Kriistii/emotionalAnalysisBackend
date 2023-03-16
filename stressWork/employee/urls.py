@@ -21,7 +21,9 @@ trendTime = StressStatsTimespan.as_view()
 interaction_details = InteractionDetailsAPIView.as_view()
 
 newEmployee = NewEmployee.as_view()
+new_request = NewRequest.as_view()
 new_session = NewSession.as_view()
+complete_new_request = CompleteNewRequest.as_view()
 interactionSummary = GetInteractionSummary.as_view()
 userInteractions = GetUserInteractions.as_view()
 
@@ -43,6 +45,8 @@ urlpatterns = [
     path("trend", trend, name="trend"),
     path("trend/<str:timespan>", trendTime, name="trendTime"),
     path("newEmployee", newEmployee, name="newEmployee"),
+    path("newRequest", new_request, name="newRequest"),
+    path("completeNewRequest", complete_new_request, name="completeNewRequest"),
     path("getInteractionSummary", interactionSummary, name="interactionSummary"),
     path("getInteractions/<int:employee_id>", userInteractions, name="userInteractions"),
 ]
