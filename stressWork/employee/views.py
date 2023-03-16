@@ -58,12 +58,10 @@ class NewEmployee(APIView):
 
 class NewRequest(APIView):
     def post(self, request):
-        textField = ''
-        if request.POST.get('text', None):
-            textField = request.POST['text']
-        employerId = request.session['employer_id']
+        textField = request.data['text']
+        employer = request.data['employer_id']
 
-        Request.objects.create(text=textField, created_by=employerId, date=datetime.now())
+        Request.objects.create(text=textField, created_by=employer['id'], created_at=datetime.now())
 
         return Response('Ok')
 
