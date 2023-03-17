@@ -34,6 +34,12 @@ class SessionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Session
         fields = ['id', 'employee', 'date', 'request', 'analyzed', 'text', 'full_audio_path', 'full_video_path']
+
+
+class SessionMiniSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Session
+        fields = ['id', 'employee', 'date']
 class RequestSerializer(serializers.ModelSerializer):
     class Meta:
         model = Request
@@ -41,9 +47,13 @@ class RequestSerializer(serializers.ModelSerializer):
 class RequestOnlyTextSerializer(serializers.ModelSerializer):
     class Meta:
         model = Request
-        fields = [ 'id','text']
+        fields = ['id', 'text']
 
-
+class SessionSerializerWithRequest(serializers.ModelSerializer):
+    request = RequestOnlyTextSerializer()
+    class Meta:
+        model = Session
+        fields = ['id', 'employee', 'date', 'request', 'analyzed', 'text']
 
 
 

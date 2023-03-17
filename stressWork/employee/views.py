@@ -326,19 +326,16 @@ class RetrieveSessionsEmployee(APIView):
     def post(self, request):
         user_id = request.data.get('user_id', None)
         if user_id is not None:
-            chats = SessionSerializer(get_list_or_404(Session.objects.filter(employee=get_object_or_404(Employee, pk=user_id), analyzed=True).order_by("-date")), many=True).data
+            chats = SessionMiniSerializer(get_list_or_404(Session.objects.filter(employee=get_object_or_404(Employee, pk=user_id), analyzed=False).order_by("-date")), many=True).data
             return Response({"chats": chats})
 
 class RetrieveChatLogsEmployee(APIView):
 
     def post(self, request):
-        chat_id = request.data.get('chat_id', None)
-        if chat_id is not None:
-            chat_logs = ChatSessionSerializer(get_object_or_404(ChatSession, pk=chat_id)).data
-            conversation_path = default_storage.path(chat_logs['full_conversation_path'])
-            f = open(conversation_path)
-            logs = json.load(f)
-            return Response({"chat": logs, "date": chat_logs['date']})
+        session_id = request.data.get('chat_id', None)
+        if session_id is not None:
+            session_logs = SessionSerializerWithRequest(get_object_or_404(Session, pk=session_id)).data
+            return Response({"logs": session_logs})
 
 
 class InteractionDetailsAPIView(APIView):
