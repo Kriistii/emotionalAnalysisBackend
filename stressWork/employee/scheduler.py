@@ -22,17 +22,25 @@ def save_data():
         stressRecord.save()
 
 def run_analysis():
-    chat = Session.objects.filter(analyzed=False, completed=True).order_by('date')
-    chatSerialized = SessionSerializer(chat, many=True).data
-    if len(chatSerialized):
-        weigthText = 0.333
-        weigthAudio = 0.333
-        weigthVideo = 0.333
-        chatId = chatSerialized[0]['id']
-        print(chatId)
-        text_analysis_results = text_service.mergeAndAnalyzeText(chatId)
-        audio_analysis_results = audio.mergeAndAnalyzeAudio(chatId)
-        video_analysis_results = video.mergeAndAnalyzeVideo(chatId)
+    #todo add company
+    user_sessions = Session.objects.filter(analyzed=False, completed=True).order_by('date')
+
+    for s in user_sessions:
+        session_serialized = SessionSerializer(s).data
+        print(session_serialized)
+        text_weight = 0.333
+        audio_weight = 0.333
+        video_weight = 0.333
+
+        text_analysis_results = text_service.analyzeText(session_serialized['text'])
+    #   audio_analysis_results = audio.analyze_audio(session_serialized['full_audio_path'])
+        video_analysis_results = video.analyze_video(session_serialized['id'], session_serialized['full_video_path'])
+        print('text')
+        print(text_analysis_results)
+        print('video')
+        print(video_analysis_results)
+        print('audio')
+        #print(audio_analysis_results)
         sum_emotions = {}
         emotions = ['sd', 'an', 'fr', 'hp', 'sr']
         for e in emotions:
@@ -41,25 +49,24 @@ def run_analysis():
             score_audio = 0
 
             if text_analysis_results is not None:
-                score_text = text_analysis_results[e] * weigthText
-            if audio_analysis_results is not None:
-                score_video = audio_analysis_results[e] * weigthAudio
+                score_text = text_analysis_results[e] * text_weight
+            #if audio_analysis_results is not None:
+             #   score_video = audio_analysis_results[e] * audio_weight
             if video_analysis_results is not None:
-                score_video = video_analysis_results[e] * weigthVideo
+                score_video = video_analysis_results[e] * video_weight
 
             sum_emotions[e] = score_text + score_video + score_audio
         sum_emotions_ordered = sorted(sum_emotions.items(), key=lambda x: x[1], reverse=True)
         first_emotion = sum_emotions_ordered[0]
         second_emotion = sum_emotions_ordered[1]
-        c = Session.objects.get(pk=chatId)
 
         if float(first_emotion[1]) / 2 > float(second_emotion[1]):
-            c.first_prevailing_emotion = Emotion.objects.get(emotion_name=first_emotion[0])
+            s.first_prevailing_emotion = Emotion.objects.get(emotion_name=first_emotion[0])
         else:
-            c.first_prevailing_emotion = Emotion.objects.get(emotion_name=first_emotion[0])
-            c.second_prevailing_emotion = Emotion.objects.get(emotion_name=second_emotion[0])
-        c.analyzed = True
-        c.save()
+            s.first_prevailing_emotion = Emotion.objects.get(emotion_name=first_emotion[0])
+            s.second_prevailing_emotion = Emotion.objects.get(emotion_name=second_emotion[0])
+        s.analyzed = True
+        s.save()
         #TODO save result and don't save the second emotion if its not at least half (Or just not save it at all)
 
 
@@ -112,7 +119,7 @@ def stressAnalysis(employee_id):
 
 def startScheduler():
     # run this job every 24 hours
-    scheduler.add_job(run_analysis, 'interval', days=1, name='run_analysis', jobstore='default')
-    scheduler.add_job(save_data, 'interval', hours=24, name='save_data', jobstore='default')
+    scheduler.add_job(run_analysis, 'interval', seconds=25, name='run_analysis', jobstore='default')
+   # scheduler.add_job(save_data, 'interval', hours=24, name='save_data', jobstore='default')
     scheduler.start()
     print("Scheduler started...", file=sys.stdout)

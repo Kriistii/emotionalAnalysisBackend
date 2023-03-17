@@ -177,7 +177,6 @@ class NewSession(APIView):
             newSession.full_audio_path = audio_path,
             newSession.text = text
             newSession.save()
-            #kot fare
             return Response("Success")
         return response
 

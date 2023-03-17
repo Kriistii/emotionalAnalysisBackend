@@ -33,7 +33,7 @@ class EmotionsSerializer(serializers.ModelSerializer):
 class SessionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Session
-        fields = ['id', 'employee', 'date', 'request', 'analyzed']
+        fields = ['id', 'employee', 'date', 'request', 'analyzed', 'text', 'full_audio_path', 'full_video_path']
 class RequestSerializer(serializers.ModelSerializer):
     class Meta:
         model = Request
