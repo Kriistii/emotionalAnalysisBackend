@@ -14,7 +14,7 @@ import environ
 from asgiref.sync import sync_to_async
 
 env = environ.Env()
-
+'''
 
 def mergeAndAnalyzeVideo(session_id):
     messages = ChatSessionMessageSerializer(ChatSessionMessage.objects.filter(session=ChatSession(pk=session_id)).order_by('date'), many=True).data
@@ -35,7 +35,7 @@ def mergeAndAnalyzeVideo(session_id):
             return results
     else:
         return None
-
+'''
 
 def save_video(session_id, video_file, name):
     path = 'tmp/{}/videos/{}.webm'.format(session_id, name)
@@ -44,9 +44,9 @@ def save_video(session_id, video_file, name):
     return path
 
 
-def analyze_video(identifier):
+def analyze_video(identifier, path):
     # get paths, for video processing
-    video_path = default_storage.path('tmp/{}/full_video.webm'.format(identifier))
+    video_path = default_storage.path(path)
     csv_path = default_storage.path(f'tmp/{identifier}/csv')
     os.makedirs(os.path.dirname(csv_path), exist_ok=True)
     openFaceExecPath = env('OPEN_FACE_EXEC_PATH')
@@ -82,7 +82,6 @@ def analyze_video(identifier):
     shutil.rmtree(default_storage.path('tmp/{}/tmp_videos'.format(identifier)))
     shutil.rmtree(default_storage.path('tmp/{}/csv'.format(identifier)))
 
-    start = end
     return results
 
 

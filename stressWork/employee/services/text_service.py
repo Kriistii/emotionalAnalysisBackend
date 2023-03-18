@@ -25,8 +25,8 @@ def analyzeText(text):
 
     return emotions_score
 
-
-def mergeAndAnalyzeText(chat_session_id):
+'''
+def mergeAndAnalyzeText(text):
     session_messages = ChatSessionMessage.objects.filter(session=ChatSession(pk=chat_session_id)).order_by("date")
     if len(session_messages):
         conversation = []
@@ -56,6 +56,6 @@ def mergeAndAnalyzeText(chat_session_id):
             return None
     else:
         return None
-
+'''
 
 

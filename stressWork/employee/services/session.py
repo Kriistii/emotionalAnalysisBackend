@@ -7,7 +7,7 @@ from datetime import datetime
 
 def createSession(employee_id, request_id):
     session = Session(employee=Employee(pk=employee_id), request=Request(pk=request_id),
-                      date=datetime.now())
+                      date=datetime.now(), completed=True, analyzed=False)
     session.save()
     return session
 
@@ -16,4 +16,5 @@ def createSession(employee_id, request_id):
 def completeSession(session_id):
     session = Session.objects.get(pk=session_id)
     session.completed = True
+    session.analyzed = False
     session.save()
