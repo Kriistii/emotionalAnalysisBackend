@@ -193,6 +193,37 @@ class CompleteNewRequest(APIView):
         serializer = RequestOnlyTextSerializer(notCompletedRequests[n])
         print(serializer.data)
         return Response(serializer.data)
+class GetQuestionnaireRequest(APIView):
+    permission_classes = (IsAuthenticated,)
+
+    def post(self, request):
+        employee_id = request.data.get('employee_id', None)
+        notCompletedRequest = Request.objects.exclude(id__in=
+                               Questionnaire.objects.filter(employee_id=employee_id).values_list('request_id', flat=True)).first()
+
+        serializer = RequestOnlyTextSerializer(notCompletedRequest)
+        print(serializer.data)
+        return Response(serializer.data)
+
+class FillInQuestionnaire(APIView):
+    permission_classes = (IsAuthenticated,)
+
+    def post(self, request):
+        employee_id = request.data.get('employee_id', None)
+        request_id = request.data.get('request_id', None)
+        happiness = request.data.get('happiness', None)
+        sadness = request.data.get('sadness', None)
+        anger = request.data.get('anger', None)
+        fear = request.data.get('fear', None)
+        surprise = request.data.get('surprise', None)
+        emotion_ids = [1, 2, 3, 4, 5]
+        emotion_score = [anger, fear, happiness, sadness, surprise]
+        for key, value in enumerate(emotion_ids):
+            questionnaire = Questionnaire(employee=Employee(pk=employee_id), request=Request(pk=request_id),
+                              emotion=Emotion(pk=value), score=emotion_score[key])
+            questionnaire.save()
+
+        return Response('Ok')
 
 class CreateEmployeeAPIView(APIView):
     # TODO request filter

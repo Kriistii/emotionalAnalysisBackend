@@ -24,6 +24,7 @@ newEmployee = NewEmployee.as_view()
 new_request = NewRequest.as_view()
 new_session = NewSession.as_view()
 complete_new_request = CompleteNewRequest.as_view()
+questionnaire_request = GetQuestionnaireRequest.as_view()
 interactionSummary = GetInteractionSummary.as_view()
 userInteractions = GetUserInteractions.as_view()
 
@@ -47,6 +48,7 @@ urlpatterns = [
     path("newEmployee", newEmployee, name="newEmployee"),
     path("newRequest", new_request, name="newRequest"),
     path("completeNewRequest", complete_new_request, name="completeNewRequest"),
+    path("questionnaireRequest", questionnaire_request, name="questionnaireRequest"),
     path("getInteractionSummary", interactionSummary, name="interactionSummary"),
     path("getInteractions/<int:employee_id>", userInteractions, name="userInteractions"),
 ]
