@@ -209,6 +209,8 @@ class FillInQuestionnaire(APIView):
     permission_classes = (IsAuthenticated,)
 
     def post(self, request):
+        print(request.data)
+
         employee_id = request.data.get('employee_id', None)
         request_id = request.data.get('request_id', None)
         happiness = request.data.get('happiness', None)
