@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 from apscheduler.schedulers.background import BackgroundScheduler
 from django.db.models import Count
 
-from .models import Employee, StressRecord, Emotion, Session
+from .models import Employee, StressRecord, Emotion, Session, SessionResults
 from .serializers import SessionSerializer
 from .services import text_service, audio, video
 
@@ -21,26 +21,38 @@ def save_data():
         stressRecord = StressRecord(stressedUsers=entry['stressedEmployees'], company_id=entry['company_id'])
         stressRecord.save()
 
+def save_results(session, text_results, audio_results, video_results):
+    result_text = SessionResults(session=Session(pk=session.id), text=True,
+                                 happiness=text_results['hp'],  sadness=text_results['sd'],
+                                 anger=text_results['an'], fear=text_results['fr'],
+                                 surprise=text_results['sr'])
+    result_audio = SessionResults(session=Session(pk=session.id), audio=True,
+                                 happiness=audio_results['hp'],  sadness=audio_results['sd'],
+                                 anger=audio_results['an'], fear=audio_results['fr'],
+                                 surprise=audio_results['sr'])
+    result_video = SessionResults(session=Session(pk=session.id), video=True,
+                                 happiness=video_results['hp'],  sadness=video_results['sd'],
+                                 anger=video_results['an'], fear=video_results['fr'],
+                                 surprise=video_results['sr'])
+    result_text.save()
+    result_audio.save()
+    result_video.save()
+
+
 def run_analysis():
     #todo add company
     user_sessions = Session.objects.filter(analyzed=False, completed=True).order_by('date')
 
     for s in user_sessions:
         session_serialized = SessionSerializer(s).data
-        print(session_serialized)
         text_weight = 0.333
         audio_weight = 0.333
         video_weight = 0.333
 
         text_analysis_results = text_service.analyzeText(session_serialized['text'])
-    #   audio_analysis_results = audio.analyze_audio(session_serialized['full_audio_path'])
+        audio_analysis_results = audio.analyze_audio(session_serialized['full_audio_path'])
         video_analysis_results = video.analyze_video(session_serialized['id'], session_serialized['full_video_path'])
-        print('text')
-        print(text_analysis_results)
-        print('video')
-        print(video_analysis_results)
-        print('audio')
-        #print(audio_analysis_results)
+        save_results(s, text_analysis_results, audio_analysis_results, video_analysis_results)
         sum_emotions = {}
         emotions = ['sd', 'an', 'fr', 'hp', 'sr']
         for e in emotions:
@@ -50,8 +62,8 @@ def run_analysis():
 
             if text_analysis_results is not None:
                 score_text = text_analysis_results[e] * text_weight
-            #if audio_analysis_results is not None:
-             #   score_video = audio_analysis_results[e] * audio_weight
+            if audio_analysis_results is not None:
+                score_video = audio_analysis_results[e] * audio_weight
             if video_analysis_results is not None:
                 score_video = video_analysis_results[e] * video_weight
 
@@ -67,7 +79,6 @@ def run_analysis():
             s.second_prevailing_emotion = Emotion.objects.get(emotion_name=second_emotion[0])
         s.analyzed = True
         s.save()
-        #TODO save result and don't save the second emotion if its not at least half (Or just not save it at all)
 
 
 
@@ -119,7 +130,7 @@ def stressAnalysis(employee_id):
 
 def startScheduler():
     # run this job every 24 hours
-    scheduler.add_job(run_analysis, 'interval', days=25, name='run_analysis', jobstore='default')
+    scheduler.add_job(run_analysis, 'interval', minutes=25, name='run_analysis', jobstore='default')
    # scheduler.add_job(save_data, 'interval', hours=24, name='save_data', jobstore='default')
     scheduler.start()
     print("Scheduler started...", file=sys.stdout)

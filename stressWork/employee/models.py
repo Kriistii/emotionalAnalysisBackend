@@ -117,6 +117,23 @@ class Session(models.Model):
         return f"{'id:' + str(self.id) + ' date:' + str(self.date) + ' first_prevailing_emotion:' + str(self.first_prevailing_emotion) +' second_prevailing_emotion:' + str(self.second_prevailing_emotion) + ' analyzed:' + str(self.analyzed)}   "
 
 
+class SessionResults(models.Model):
+    class Meta:
+        db_table = 'session_results'
+
+    session = models.ForeignKey("Session", on_delete=models.CASCADE)
+    text = models.BooleanField(null=True)
+    audio = models.BooleanField(null=True)
+    video = models.BooleanField(null=True)
+    happiness = models.FloatField(null=True)
+    sadness = models.FloatField(null=True)
+    surprise = models.FloatField(null=True)
+    anger = models.FloatField(null=True)
+    fear = models.FloatField(null=True)
+    objects = models.Manager()
+
+    def __str__(self) -> str:
+        return f"{'session:' +  str(self.session) + 'text:' + str(self.text)+ 'audio:' + str(self.audio)+ 'video:' + str(self.video)+ 'happiness:' + str(self.happiness)+ 'sadness:' + str(self.sadness)}"
 class Questionnaire(models.Model):
     class Meta:
         db_table = 'questionnaire'
