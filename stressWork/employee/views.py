@@ -1,5 +1,5 @@
 import django
-from django.db.models import Max
+from django.db.models import Max, Count
 
 from .serializers import *
 from .models import *
@@ -106,10 +106,10 @@ class GetInteractionSummary(APIView):
 
         # query = "SELECT id, name, surname, is_stressed, max(date) FROM employees natural join chatsession WHERE company = %s GROUP BY id, name, surname, is_stressed"
 
-        result = ChatSession.objects\
+        result = Session.objects\
                 .filter(employee__company=company_id)\
                 .values('employee__id', 'employee__name', 'employee__surname', 'employee__stressed')\
-                .annotate(lastDate=Max('date'))\
+                .annotate(lastDate=Max('date'), sessions=Count('id'))\
                 .order_by('employee__name', 'employee__surname')
 
         return Response(result)
@@ -118,8 +118,8 @@ class GetUserInteractions(APIView):
     def get(self, request, employee_id):
         # query = "SELECT id, date, first_prevailing_emotion FROM chatsession WHERE employee=%d ORDER BY date DESC"
 
-        result = ChatSession.objects.filter(employee=employee_id, analyzed=True).order_by("-date")
-        serializer = ChatSessionSerializer(result, many=True).data
+        result = Session.objects.filter(employee=employee_id, analyzed=True).order_by("-date")
+        serializer = SessionSerializer(result, many=True).data
 
         for s in serializer:
             firstEmotion = get_object_or_404(Emotion, id=s['first_prevailing_emotion'])
@@ -372,19 +372,19 @@ class RetrieveChatLogsEmployee(APIView):
 
 
 class InteractionDetailsAPIView(APIView):
-    def get(self, request, chat_id):
-        chat_session = get_object_or_404(ChatSession, id=chat_id)
-        csv_results = None;
-        serializerChat = ChatSessionSerializer(chat_session).data
-        if(serializerChat['first_prevailing_emotion']):
-            firstEmotion = get_object_or_404(Emotion, id=serializerChat['first_prevailing_emotion'])
-            serializerChat['first_prevailing_emotion'] = EmotionsSerializer(firstEmotion).data['extended_name']
-        if(serializerChat['second_prevailing_emotion']):
-            secondEmotion = get_object_or_404(Emotion, id=serializerChat['second_prevailing_emotion'])
-            serializerChat['second_prevailing_emotion'] = EmotionsSerializer(secondEmotion).data['extended_name']
-        if(serializerChat['full_video_path']):
-            serializerChat['hasGraph'] = True
-            data = read_csv("tmp/{}/video_analysis.csv".format(chat_id))
+    def get(self, request, session_id):
+        session = get_object_or_404(Session, id=session_id)
+        csv_results = None
+        serializer = SessionSerializer(session).data
+        if(serializer['first_prevailing_emotion']):
+            firstEmotion = get_object_or_404(Emotion, id=serializer['first_prevailing_emotion'])
+            serializer['first_prevailing_emotion'] = EmotionsSerializer(firstEmotion).data['extended_name']
+        if(serializer['second_prevailing_emotion']):
+            secondEmotion = get_object_or_404(Emotion, id=serializer['second_prevailing_emotion'])
+            serializer['second_prevailing_emotion'] = EmotionsSerializer(secondEmotion).data['extended_name']
+        if(serializer['full_video_path']):
+            serializer['hasGraph'] = True
+            data = read_csv("tmp/{}/video_analysis.csv".format(session_id))
 
             hp = data['hp']
             fr = data['fr']
@@ -397,12 +397,12 @@ class InteractionDetailsAPIView(APIView):
             csv_results = {'Happiness': hp.tolist(), 'Fear': fr.tolist(), 'Anger': an.tolist(), 'Sadness': sd.tolist(), 'Surprise': sr.tolist(),
                            'length_conversation': len(data.index), 'maximum_emotion_score': maximum_score}
         else:
-            serializerChat['hasGraph'] = False
+            serializer['hasGraph'] = False
 
-        employee = get_object_or_404(Employee, id=serializerChat['employee'])
+        employee = get_object_or_404(Employee, id=serializer['employee'])
         serializerEmployee = EmployeeSerializer(employee).data
 
 
-        return Response(data={"analysis": serializerChat, "empl_info": serializerEmployee, "csv_results" : csv_results}, status=status.HTTP_200_OK)
+        return Response(data={"analysis": serializer, "empl_info": serializerEmployee, "csv_results" : csv_results}, status=status.HTTP_200_OK)
 
 
