@@ -33,7 +33,8 @@ class EmotionsSerializer(serializers.ModelSerializer):
 class SessionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Session
-        fields = ['id', 'employee', 'date', 'request', 'analyzed', 'text', 'full_audio_path', 'full_video_path']
+        fields = ['id', 'employee', 'date', 'request', 'analyzed', 'text', 'full_audio_path', 'full_video_path',
+                  'first_prevailing_emotion', 'second_prevailing_emotion']
 
 
 class SessionMiniSerializer(serializers.ModelSerializer):

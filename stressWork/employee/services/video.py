@@ -79,9 +79,8 @@ def analyze_video(identifier, path):
 
     results = sessionResultsProcessing(identifier)
     # delete videos, todo delete all csvs, leave only the main one
-    shutil.rmtree(default_storage.path('tmp/{}/tmp_videos'.format(identifier)))
-    shutil.rmtree(default_storage.path('tmp/{}/csv'.format(identifier)))
-
+    #shutil.rmtree(default_storage.path('tmp/{}/tmp_videos'.format(identifier)))
+    #shutil.rmtree(default_storage.path('tmp/{}/csv'.format(identifier)))
     return results
 
 

@@ -49,6 +49,8 @@ def save_audio(session_id, audio_file, name):
 
 
 def analyze_audio(audio_path):
+    full_audio_path= default_storage.path(audio_path)
+
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model_name_or_path = env('MODEL_PATH')
     config = AutoConfig.from_pretrained(
@@ -86,7 +88,7 @@ def analyze_audio(audio_path):
                       'sr': dict_emotions['sr']}
         return filtered_emotion_dict
 
-    result = prediction(audio_path)
+    result = prediction(full_audio_path)
     return result
 
 
