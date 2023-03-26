@@ -8,7 +8,6 @@ employee_create = CreateEmployeeAPIView.as_view()
 employer_create = CreateEmployerAPIView.as_view()
 employee_detail_api = EmployeeDetailAPIView.as_view()
 timer_chat_over = TimeChatOverEmployee.as_view()
-retrieve_sessions_employee = RetrieveSessionsEmployee.as_view()
 retrieve_chat_logs_employee = RetrieveChatLogsEmployee.as_view()
 
 retrieve_employee_information = RetrieveEmployeeInformation.as_view()
@@ -28,6 +27,7 @@ questionnaire_request = GetQuestionnaireRequest.as_view()
 fill_in_questionnaire = FillInQuestionnaire.as_view()
 interactionSummary = GetInteractionSummary.as_view()
 userInteractions = GetUserInteractions.as_view()
+get_sessions = RetrieveSessionsEmployee.as_view()
 
 urlpatterns = [
     path("", employee_api, name="employees"),
@@ -39,7 +39,6 @@ urlpatterns = [
     path("getAnalysis/<uuid:session_id>", interaction_details, name="interaction_details"),
     path("createEmployee", employee_create, name="employee-create"),
     path("createEmployer", employer_create, name="employer-create"),
-    path("retrieveSessionsEmployee", retrieve_sessions_employee, name="retrieve_sessions_employee"),
     path("retrieveChatLogsEmployee", retrieve_chat_logs_employee, name="retrieve_chat_logs_employee"),
     path("<int:employee_id>", employee_detail_api, name="employee-detail"),
     path("newSession", new_session, name="new_session"),
@@ -53,5 +52,6 @@ urlpatterns = [
     path("fillInQuestionnaire", fill_in_questionnaire, name="fillInQuestionnaire"),
     path("getInteractionSummary", interactionSummary, name="interactionSummary"),
     path("getInteractions/<int:employee_id>", userInteractions, name="userInteractions"),
+    path("getSessions/<int:employee_id>", get_sessions, name="get_sessions"),
 ]
 
