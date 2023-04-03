@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Employer, Employee, StressRecord,  AppUsers,  Emotion, Session, Request
+from .models import Employer, Employee, StressRecord,  AppUsers,  Emotion, Session, Request, SessionResults
 from dj_rest_auth.serializers import UserDetailsSerializer
 
 class EmployeeSerializer(serializers.ModelSerializer):
@@ -55,6 +55,10 @@ class SessionSerializerWithRequest(serializers.ModelSerializer):
     class Meta:
         model = Session
         fields = ['id', 'employee', 'date', 'request', 'analyzed', 'text']
+class ResultsSerializerWithSession(serializers.ModelSerializer):
+    class Meta:
+        model = SessionResults
+        fields = ['text', 'audio', 'video', 'happiness', 'sadness', 'anger', 'fear', 'surprise']
 
 
 

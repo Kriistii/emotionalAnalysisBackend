@@ -1,5 +1,6 @@
 import django
 from django.db.models import Max, Count
+from rest_framework.status import HTTP_400_BAD_REQUEST
 
 from .serializers import *
 from .models import *
@@ -27,13 +28,12 @@ class EmployeeStatsAPIView(APIView):
     #   permission_classes = (IsAuthenticated,)
     def get(self, request):
         companyId = request.session['companyId']
-
         numEmployees = Employee.objects.filter(company=companyId).count()
-        stressedEmployees = Employee.objects.filter(stressed=True, company=companyId).count()
+        activeEmployees = Employee.objects.filter(id__in=Session.objects.values_list('employee_id', flat=True)).count()
 
         return Response({
             "numEmployees": numEmployees,
-            "stressedEmployees": stressedEmployees
+            "activeEmployees": activeEmployees
         })
 
 
@@ -68,34 +68,32 @@ class NewRequest(APIView):
 
 class StressStats(APIView):
     def get(self, request):
-        stats = StressRecord.objects.all()
-        serializer = StressRecordSerializer(stats, many=True)
+        stats = Employee.objects.annotate(sessions=Count('session__id'))
+        print(stats)
 
-        return Response(serializer.data)
+        return Response(stats)
 
 
 class StressStatsTimespan(APIView):
     def get(self, request, timespan):
-        companyId = request.session['companyId']
 
         today = datetime.today()
-        serializer = StressRecordSerializer(data=request.data)
 
         if timespan == "week":
             week_start = today - timedelta(days=today.weekday())
             week_end = week_start + timedelta(days=7)
 
-            stats = StressRecord.objects.filter(date__gte=week_start, date__lt=week_end, company=companyId)
+            stats = Session.objects.filter(date__gte=week_start, date__lt=week_end)
         elif timespan == "month":
-            stats = StressRecord.objects.filter(date__month=today.month, date__year=today.year, company=companyId)
+            stats = Session.objects.filter(date__month=today.month, date__year=today.year)
         elif timespan == "year":
-            stats = StressRecord.objects.filter(date__year=today.year, company=companyId)
+            stats = Session.objects.filter(date__year=today.year)
         else:
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
         stats = stats.order_by('date')
 
-        serializer = StressRecordSerializer(stats, many=True)
+        serializer = SessionSerializer(stats, many=True)
 
         return Response(serializer.data)
 
@@ -186,7 +184,9 @@ class CompleteNewRequest(APIView):
     def post(self, request):
         employee_id = request.data.get('employee_id', None)
         notCompletedRequests = Request.objects.exclude(id__in=
-                               Session.objects.filter(employee_id = employee_id).values_list('request_id', flat=True))
+                               Session.objects.filter(employee_id=employee_id).values_list('request_id', flat=True))
+        if(notCompletedRequests.count() == 0):
+            return Response(400)
         max = notCompletedRequests.count() - 1
         min = 0
         n = random.randint(min, max)
@@ -198,9 +198,12 @@ class GetQuestionnaireRequest(APIView):
 
     def post(self, request):
         employee_id = request.data.get('employee_id', None)
-        notCompletedRequest = Request.objects.exclude(id__in=
-                               Questionnaire.objects.filter(employee_id=employee_id).values_list('request_id', flat=True)).first()
 
+        notCompletedRequest = Request.objects.exclude(id__in=
+                               Questionnaire.objects.filter(employee_id=employee_id).values_list('request_id',
+                            flat=True)).filter(id__in=Session.objects.filter(employee_id=employee_id).values_list('request_id',
+                            flat=True)).first()
+        print(notCompletedRequest)
         serializer = RequestOnlyTextSerializer(notCompletedRequest)
         print(serializer.data)
         return Response(serializer.data)
@@ -354,13 +357,9 @@ class TimeChatOverEmployee(APIView):
             return Response("User id not found", status=404)
 
 class RetrieveSessionsEmployee(APIView):
-    permission_classes = (IsAuthenticated,)
-
-    def post(self, request):
-        user_id = request.data.get('user_id', None)
-        if user_id is not None:
-            chats = SessionMiniSerializer(get_list_or_404(Session.objects.filter(employee=get_object_or_404(Employee, pk=user_id), analyzed=False).order_by("-date")), many=True).data
-            return Response({"chats": chats})
+    def get(self, request, employee_id):
+        chats = SessionMiniSerializer(get_list_or_404(Session.objects.filter(employee=get_object_or_404(Employee, pk=employee_id), analyzed=True).order_by("-date")), many=True).data
+        return Response({"chats": chats})
 
 class RetrieveChatLogsEmployee(APIView):
 
@@ -374,6 +373,17 @@ class RetrieveChatLogsEmployee(APIView):
 class InteractionDetailsAPIView(APIView):
     def get(self, request, session_id):
         session = get_object_or_404(Session, id=session_id)
+        results = SessionResults.objects.filter(session_id=session_id)
+        results = ResultsSerializerWithSession(results, many=True)
+        results = results.data[:]
+        response = {}
+        for r in results:
+            if(r['text'] == True):
+                response['text_results'] = r
+            if(r['audio'] == True):
+                response['audio_results'] = r
+            if(r['video'] == True):
+                response['video_results'] = r
         csv_results = None
         serializer = SessionSerializer(session).data
         if(serializer['first_prevailing_emotion']):
@@ -394,8 +404,9 @@ class InteractionDetailsAPIView(APIView):
 
             maximum_score = max(hp.max(), fr.max(),an.max(), sd.max(), sr.max())
 
-            csv_results = {'Happiness': hp.tolist(), 'Fear': fr.tolist(), 'Anger': an.tolist(), 'Sadness': sd.tolist(), 'Surprise': sr.tolist(),
-                           'length_conversation': len(data.index), 'maximum_emotion_score': maximum_score}
+            csv_results = {'Happiness': hp.tolist(), 'Fear': fr.tolist(), 'Anger': an.tolist(), 'Sadness': sd.tolist(),
+                           'Surprise': sr.tolist(),'length_conversation': len(data.index),
+                           'maximum_emotion_score': maximum_score}
         else:
             serializer['hasGraph'] = False
 
@@ -403,6 +414,8 @@ class InteractionDetailsAPIView(APIView):
         serializerEmployee = EmployeeSerializer(employee).data
 
 
-        return Response(data={"analysis": serializer, "empl_info": serializerEmployee, "csv_results" : csv_results}, status=status.HTTP_200_OK)
+        return Response(data={"analysis": serializer, "empl_info": serializerEmployee, "csv_results" : csv_results,
+                              'text' : response['text_results'], 'audio' : response['audio_results'],
+                              'video' : response['video_results']}, status=status.HTTP_200_OK)
 
 
