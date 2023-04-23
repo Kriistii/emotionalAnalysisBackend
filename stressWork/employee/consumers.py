@@ -5,8 +5,6 @@ from .services import chatbot, video, audio, text_service, chat, session
 from .models import Employee
 import filetype
 
-from semantic_text_similarity.models import WebBertSimilarity
-web_model = WebBertSimilarity(device='cpu', batch_size=10)
 
 
 class ChatConsumer(AsyncJsonWebsocketConsumer):
