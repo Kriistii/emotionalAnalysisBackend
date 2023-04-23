@@ -80,6 +80,22 @@ class TasQuestionnaire(APIView):
         code = serializer.data['code']
         questions = getTasQuestions()
         createOrUpdateExcelFile(answers, 'tas', questions, code)
+        employee.step = 2
+        employee.save()
+        return Response(status=status.HTTP_200_OK)
+
+class BDIQuestionnaire(APIView):
+    def post(self, request):
+        employee_id = request.data.get('employee', None)
+        answers = request.data.getlist('question')
+        print(answers)
+        employee = get_object_or_404(Employee, id=employee_id)
+        serializer = EmployeeCodeSerializer(employee)
+        code = serializer.data['code']
+        questions = getBDIQuestions()
+        createOrUpdateExcelFile(answers, 'bdi', questions, code)
+        employee.step = 3
+        employee.save()
         return Response(status=status.HTTP_200_OK)
 
 
@@ -108,7 +124,31 @@ def getTasQuestions():
         20: "Cercare significati nascosti in films o commedie distoglie dal piacere dello spettacolo"
     }
     return questions
-
+def getBDIQuestions():
+    # Create dictionary for question numbers and questions
+    questions = {
+        1: "Tristezza",
+        2: "Pessimismo",
+        3: "Fallimento",
+        4: "Perdita di piacere",
+        5: "Senso di colpa",
+        6: "Sentimenti di punizione",
+        7: "Autostima",
+        8: "Autocritica",
+        9: "Suicidio",
+        10: "Pianto",
+        11: "Agitazione",
+        12: "Perdita di interessi",
+        13: "Indecisione",
+        14: "Senso di inutilità",
+        15: "Perdita di energia",
+        16: "Sonno",
+        17: "Appetito",
+        18: "Concentrazione",
+        19: "Fatica",
+        20: "Sesso"
+    }
+    return questions
 
 def createOrUpdateExcelFile(answers, identifier, questions, code):
     # Check if file exists
@@ -137,7 +177,11 @@ def createOrUpdateExcelFile(answers, identifier, questions, code):
     print(answers)
     for i, a in enumerate(answers):
         print(f"Adding row for question {i + 1}")
-        row = [i+1, questions[i+1], a]
+        if identifier == "bdi" :
+            row = [i+1, questions[i+1], a*1]
+        else:
+            row = [i+1, questions[i+1], a]
+
         worksheet.append(row)
     worksheet.append(['', '', ''])
     # Save workbook

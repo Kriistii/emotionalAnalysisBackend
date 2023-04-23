@@ -31,6 +31,8 @@ interactionSummary = GetInteractionSummary.as_view()
 userInteractions = GetUserInteractions.as_view()
 get_sessions = RetrieveSessionsEmployee.as_view()
 tas = TasQuestionnaire.as_view()
+bdi = BDIQuestionnaire.as_view()
+
 
 urlpatterns = [
     path("", employee_api, name="employees"),
@@ -59,5 +61,6 @@ urlpatterns = [
     path("getStep", get_step, name="get_step"),
     path("registrationForm", registration_form, name="registration_form"),
     path("tas", tas, name="tas"),
+    path("bdi", bdi, name="bdi"),
 ]
 
