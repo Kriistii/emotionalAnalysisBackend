@@ -30,6 +30,7 @@ fill_in_questionnaire = FillInQuestionnaire.as_view()
 interactionSummary = GetInteractionSummary.as_view()
 userInteractions = GetUserInteractions.as_view()
 get_sessions = RetrieveSessionsEmployee.as_view()
+tas = TasQuestionnaire.as_view()
 
 urlpatterns = [
     path("", employee_api, name="employees"),
@@ -57,5 +58,6 @@ urlpatterns = [
     path("getSessions/<int:employee_id>", get_sessions, name="get_sessions"),
     path("getStep", get_step, name="get_step"),
     path("registrationForm", registration_form, name="registration_form"),
+    path("tas", tas, name="tas"),
 ]
 

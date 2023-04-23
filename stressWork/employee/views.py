@@ -19,7 +19,8 @@ from rest_framework.permissions import IsAuthenticated
 from django.contrib.auth.hashers import make_password
 from django.core.files.storage import default_storage
 from pandas import *
-
+import os
+import openpyxl
 import json
 import random
 
@@ -68,6 +69,80 @@ class RegistrationForm(APIView):
             return Response(status=status.HTTP_201_CREATED)
 
         return Response(data=serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class TasQuestionnaire(APIView):
+    def post(self, request):
+        employee_id = request.data.get('employee', None)
+        answers = request.data.getlist('question')
+        print(answers)
+        employee = get_object_or_404(Employee, id=employee_id)
+        serializer = EmployeeCodeSerializer(employee)
+        code = serializer.data['code']
+        questions = getTasQuestions()
+        createOrUpdateExcelFile(answers, 'tas', questions, code)
+        return Response(status=status.HTTP_200_OK)
+
+
+def getTasQuestions():
+    # Create dictionary for question numbers and questions
+    questions = {
+        1: "Sono spesso confuso circa le emozioni che provo",
+        2: "Mi è difficile trovare le parole giuste per esprimere i miei sentimenti",
+        3: "Provo delle sensazioni fisiche che neanche i medici capiscono",
+        4: "Riesco facilmente a descrivere i miei sentimenti",
+        5: "Preferisco approfondire i problemi piuttosto che descriverli semplicemente",
+        6: "Quando sono sconvolto/a non so se sono triste, spaventato/a o arrabbiato/a",
+        7: "Sono spesso disorientato dalle sensazioni che provo nel mio corpo",
+        8: "Preferisco lasciare che le cose seguano il loro corso piuttosto che capire perché sono andate in quel modo",
+        9: "Provo sentimenti che non riesco proprio ad identificare",
+        10: "E’ essenziale conoscere le proprie emozioni",
+        11: "Mi è difficile descrivere ciò che provo per gli altri",
+        12: "Gli altri mi chiedono di parlare di più dei miei sentimenti",
+        13: "Non capisco cosa stia accadendo dentro di me",
+        14: "Spesso non so perché mi arrabbio",
+        15: "Con le persone preferisco parlare delle cose di tutti i giorni piuttosto che delle loro emozioni",
+        16: "Preferisco vedere spettacoli leggeri piuttosto che spettacoli a sfondo psicologico",
+        17: "Mi è difficile rilevare i miei sentimenti più profondi anche agli amici più intimi",
+        18: "Riesco a sentirmi vicino a una persona, anche se ci capita di stare in silenzio",
+        19: "Trovo che l’esame dei miei sentimenti mi serve a risolvere i miei problemi personali",
+        20: "Cercare significati nascosti in films o commedie distoglie dal piacere dello spettacolo"
+    }
+    return questions
+
+
+def createOrUpdateExcelFile(answers, identifier, questions, code):
+    # Check if file exists
+    path_dir = 'tmp/excel'
+    path_excel = f'{path_dir}/{identifier}.xlsx'
+    try:
+        if not os.path.exists(path_dir):
+            os.makedirs(path_dir)
+        workbook = openpyxl.load_workbook(path_excel)
+    except FileNotFoundError:
+        # Create new workbook if file doesn't exist
+        workbook = openpyxl.Workbook()
+        worksheet = workbook.active
+        last_row = 2
+    else:
+        # Open existing worksheet
+        worksheet = workbook.active
+        last_row = worksheet.max_row + 1
+
+    # Add first row with Employee code
+    worksheet.append(['User Code:', code])
+    # Add second row with headers
+    worksheet.append(['Question number', 'Question', 'User Answer'])
+    # Add rows for each question
+    print(f"Number of questions: {len(answers)}")
+    print(answers)
+    for i, a in enumerate(answers):
+        print(f"Adding row for question {i + 1}")
+        row = [i+1, questions[i+1], a]
+        worksheet.append(row)
+    worksheet.append(['', '', ''])
+    # Save workbook
+    workbook.save(path_excel)
+
 
 class GetStep(APIView):
     def post(self, request):
