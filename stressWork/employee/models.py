@@ -40,7 +40,10 @@ class Employee(models.Model):
 
     name = models.CharField(max_length=50)
     surname = models.CharField(max_length=50)
-    birthday = models.DateField()
+    age = models.IntegerField()
+    education = models.CharField(max_length=50)
+    faculty = models.CharField(max_length=50)
+    gender = models.CharField(max_length=2)
     stressed = models.BooleanField(default=False)
     company = models.ForeignKey("Company", on_delete=models.CASCADE)
     user = models.ForeignKey("AppUsers", on_delete=models.CASCADE)

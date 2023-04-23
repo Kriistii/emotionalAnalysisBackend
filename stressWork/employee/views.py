@@ -59,21 +59,15 @@ class NewEmployee(APIView):
 
 class RegistrationForm(APIView):
     def post(self, request):
-        employee = get_object_or_404(Employee, id=1)
-        if employee.step == 0:
-            employee.step = 1
-            employee.save()
+        employee = get_object_or_404(Employee, id=request.data['employee'])
+        employeeData = request.data['data']
+        employeeData['step'] = 1
+        serializer = EmployeeGeneralSerializer(employee,data=employeeData)
+        if serializer.is_valid():
+            serializer.save()
             return Response(status=status.HTTP_201_CREATED)
-        return Response(status=status.HTTP_201_CREATED)
-            #request.data['step'] = 1
-            #serializer = EmployeeSerializer(data=request.data)
-            #if serializer.is_valid():
-                #serializer.save()
-                #return Response(status=status.HTTP_201_CREATED)
 
-            #return Response(data=serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-        #return Response(status=status.HTTP_400_BAD_REQUEST)
+        return Response(data=serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class GetStep(APIView):
     def post(self, request):
