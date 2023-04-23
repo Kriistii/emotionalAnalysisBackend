@@ -7,7 +7,7 @@ from .models import *
 from .services import audio, video, session
 import uuid
 from datetime import datetime, timedelta
-from semantic_text_similarity.models import WebBertSimilarity
+#from semantic_text_similarity.models import WebBertSimilarity
 
 from django.shortcuts import get_object_or_404, get_list_or_404
 from rest_framework import status
@@ -15,7 +15,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 
-web_model = WebBertSimilarity(device='cpu', batch_size=10)
+#web_model = WebBertSimilarity(device='cpu', batch_size=10)
 from django.contrib.auth.hashers import make_password
 from django.core.files.storage import default_storage
 from pandas import *
@@ -45,8 +45,9 @@ class NewEmployee(APIView):
                                        is_staff=False,
                                        is_superuser=False)
         request.data['user'] = user.id
+        request.data['step'] = 0
 
-        serializer = EmployeeSerializer(data=request.data)
+        serializer = EmployeeStepSerializer(data=request.data)
         if serializer.is_valid():
             user.set_password(request.data['password'])
             user.save()
@@ -55,6 +56,31 @@ class NewEmployee(APIView):
             return Response(status=status.HTTP_201_CREATED)
 
         return Response(data=serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class RegistrationForm(APIView):
+    def post(self, request):
+        employee = get_object_or_404(Employee, id=1)
+        if employee.step == 0:
+            employee.step = 1
+            employee.save()
+            return Response(status=status.HTTP_201_CREATED)
+        return Response(status=status.HTTP_201_CREATED)
+            #request.data['step'] = 1
+            #serializer = EmployeeSerializer(data=request.data)
+            #if serializer.is_valid():
+                #serializer.save()
+                #return Response(status=status.HTTP_201_CREATED)
+
+            #return Response(data=serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        #return Response(status=status.HTTP_400_BAD_REQUEST)
+
+class GetStep(APIView):
+    def post(self, request):
+        employee = get_object_or_404(Employee, id=request['employee_id'])
+        serializer = EmployeeStepSerializer(employee)
+
+        return Response(serializer.data)
 
 class NewRequest(APIView):
     def post(self, request):

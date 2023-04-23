@@ -44,6 +44,7 @@ class Employee(models.Model):
     stressed = models.BooleanField(default=False)
     company = models.ForeignKey("Company", on_delete=models.CASCADE)
     user = models.ForeignKey("AppUsers", on_delete=models.CASCADE)
+    step = models.IntegerField(null=True)
 
     objects = models.Manager()
 
