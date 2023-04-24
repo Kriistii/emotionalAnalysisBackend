@@ -34,6 +34,7 @@ tas = TasQuestionnaire.as_view()
 bdi = BDIQuestionnaire.as_view()
 bai = BAIQuestionnaire.as_view()
 ders = DERSQuestionnaire.as_view()
+vas = VasQuestionnaireView.as_view()
 
 
 urlpatterns = [
@@ -63,6 +64,7 @@ urlpatterns = [
     path("getStep", get_step, name="get_step"),
     path("registrationForm", registration_form, name="registration_form"),
     path("tas", tas, name="tas"),
+    path("vas", vas, name="vas"),
     path("bdi", bdi, name="bdi"),
     path("bai", bai, name="bai"),
     path("ders", ders, name="ders"),
