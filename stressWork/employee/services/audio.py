@@ -85,7 +85,7 @@ def analyze_audio(audio_path):
         r.sort_values(['Score'], ascending=False, inplace=True)
         dict_emotions = dict(zip(r['Emotion'], r['Score']))
         filtered_emotion_dict = {'sd': dict_emotions['sd'], 'an': dict_emotions['an'], 'fr': dict_emotions['fr'], 'hp': dict_emotions['hp'],
-                      'sr': dict_emotions['sr']}
+                      'sr': dict_emotions['sr'], 'nt':dict_emotions['nt']}
         return filtered_emotion_dict
 
     result = prediction(full_audio_path)

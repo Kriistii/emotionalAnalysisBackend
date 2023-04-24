@@ -114,6 +114,7 @@ def findEmotionsPerFrame2(fuArrayFrames):
     happiness = ['AU06_r', 'AU12_r', 'AU25_r']
     sadness = ['AU01_r', 'AU04_r', 'AU06_r', 'AU11_r', 'AU15_r', 'AU17_r']
     surprise = ['AU01_r', 'AU02_r', 'AU05_r', 'AU26_r', 'AU27_r']
+    neutrality = ['AU06_r', 'AU12_r', 'AU43_r']
 
     finalEmotionPoints = []
     angerPointsArray = []
@@ -122,6 +123,7 @@ def findEmotionsPerFrame2(fuArrayFrames):
     happinessPointsArray = []
     sadnessPointsArray = []
     surprisePointsArray = []
+    neutralityPointsArray = []
 
     for index, frame in enumerate(fuArrayFrames):
         angerPoints = 0
@@ -130,6 +132,7 @@ def findEmotionsPerFrame2(fuArrayFrames):
         happinessPoints = 0
         sadnessPoints = 0
         surprisePoints = 0
+        neutralityPoints = 0
 
         if (index == 0):
             continue
@@ -148,6 +151,8 @@ def findEmotionsPerFrame2(fuArrayFrames):
                 sadnessPoints = sadnessPoints + faceUnitValue
             if fuArrayFrames[0][index2] in surprise:
                 surprisePoints = surprisePoints + faceUnitValue
+            if fuArrayFrames[0][index2] in neutrality:
+                neutralityPoints = neutralityPoints + faceUnitValue
 
         # divide by the number of fu's in a set, to get average
         # the more fus a set has, the more points it may get
@@ -158,6 +163,7 @@ def findEmotionsPerFrame2(fuArrayFrames):
         happinessPointsArray.append(happinessPoints / 3)
         sadnessPointsArray.append(sadnessPoints / 6)
         surprisePointsArray.append(surprisePoints / 5)
+        neutralityPointsArray.append(neutralityPoints / 3)
 
     finalEmotionPoints = {
         'an': angerPointsArray,
@@ -165,7 +171,8 @@ def findEmotionsPerFrame2(fuArrayFrames):
         'fr': fearPointsArray,
         'hp': happinessPointsArray,
         'sd': sadnessPointsArray,
-        'sr': surprisePointsArray
+        'sr': surprisePointsArray,
+        'nt': neutralityPointsArray
     }
     # create dataframe from final emotions points
     finalEmotionPointsDf = pd.DataFrame(finalEmotionPoints)
@@ -196,13 +203,15 @@ def saveResultToCsv(emotionsDict, session_id):
         with open(csvPath, 'a') as csvFile:
             writer = csv.writer(csvFile)
             writer.writerow([emotionsDict['an'], emotionsDict['fr'],
-                             emotionsDict['hp'], emotionsDict['sd'], emotionsDict['sr']])
+                             emotionsDict['hp'], emotionsDict['sd'],
+                             emotionsDict['sr'], emotionsDict['nt']])
     else:
         with open(csvPath, 'a+') as csvFile:
             writer = csv.writer(csvFile)
-            writer.writerow(['an' , 'fr', 'hp', 'sd', 'sr'])
+            writer.writerow(['an' , 'fr', 'hp', 'sd', 'sr', 'nt'])
             writer.writerow([emotionsDict['an'], emotionsDict['fr'],
-                             emotionsDict['hp'], emotionsDict['sd'], emotionsDict['sr']])
+                             emotionsDict['hp'], emotionsDict['sd'],
+                             emotionsDict['sr'], emotionsDict['nt']])
     return 1
 
 

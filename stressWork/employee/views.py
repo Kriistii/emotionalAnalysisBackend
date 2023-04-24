@@ -19,7 +19,8 @@ from rest_framework.permissions import IsAuthenticated
 from django.contrib.auth.hashers import make_password
 from django.core.files.storage import default_storage
 from pandas import *
-
+import os
+import openpyxl
 import json
 import random
 
@@ -59,21 +60,225 @@ class NewEmployee(APIView):
 
 class RegistrationForm(APIView):
     def post(self, request):
-        employee = get_object_or_404(Employee, id=1)
-        if employee.step == 0:
-            employee.step = 1
-            employee.save()
+        employee = get_object_or_404(Employee, id=request.data['employee'])
+        employeeData = request.data['data']
+        employeeData['step'] = 1
+        serializer = EmployeeGeneralSerializer(employee,data=employeeData)
+        if serializer.is_valid():
+            serializer.save()
             return Response(status=status.HTTP_201_CREATED)
-        return Response(status=status.HTTP_201_CREATED)
-            #request.data['step'] = 1
-            #serializer = EmployeeSerializer(data=request.data)
-            #if serializer.is_valid():
-                #serializer.save()
-                #return Response(status=status.HTTP_201_CREATED)
 
-            #return Response(data=serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response(data=serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        #return Response(status=status.HTTP_400_BAD_REQUEST)
+class TasQuestionnaire(APIView):
+    def post(self, request):
+        employee_id = request.data.get('employee', None)
+        answers = request.data.getlist('question')
+        print(answers)
+        employee = get_object_or_404(Employee, id=employee_id)
+        serializer = EmployeeCodeSerializer(employee)
+        code = serializer.data['code']
+        questions = getTasQuestions()
+        createOrUpdateExcelFile(answers, 'tas', questions, code)
+        employee.step = 2
+        employee.save()
+        return Response(status=status.HTTP_200_OK)
+
+class BDIQuestionnaire(APIView):
+    def post(self, request):
+        employee_id = request.data.get('employee', None)
+        answers = request.data.getlist('question')
+        print(answers)
+        employee = get_object_or_404(Employee, id=employee_id)
+        serializer = EmployeeCodeSerializer(employee)
+        code = serializer.data['code']
+        questions = getBDIQuestions()
+        createOrUpdateExcelFile(answers, 'bdi', questions, code)
+        employee.step = 3
+        employee.save()
+        return Response(status=status.HTTP_200_OK)
+class BAIQuestionnaire(APIView):
+    def post(self, request):
+        employee_id = request.data.get('employee', None)
+        answers = request.data.getlist('question')
+        print(answers)
+        employee = get_object_or_404(Employee, id=employee_id)
+        serializer = EmployeeCodeSerializer(employee)
+        code = serializer.data['code']
+        questions = getBAIQuestions()
+        createOrUpdateExcelFile(answers, 'bai', questions, code)
+        employee.step = 4
+        employee.save()
+        return Response(status=status.HTTP_200_OK)
+class DERSQuestionnaire(APIView):
+    def post(self, request):
+        employee_id = request.data.get('employee', None)
+        answers = request.data.getlist('question')
+        employee = get_object_or_404(Employee, id=employee_id)
+        serializer = EmployeeCodeSerializer(employee)
+        code = serializer.data['code']
+        questions = getDERSQuestions()
+        createOrUpdateExcelFile(answers, 'ders', questions, code)
+        employee.step = 5
+        employee.save()
+        return Response(status=status.HTTP_200_OK)
+
+def getTasQuestions():
+    # Create dictionary for question numbers and questions
+    questions = {
+        1: "Sono spesso confuso circa le emozioni che provo",
+        2: "Mi è difficile trovare le parole giuste per esprimere i miei sentimenti",
+        3: "Provo delle sensazioni fisiche che neanche i medici capiscono",
+        4: "Riesco facilmente a descrivere i miei sentimenti",
+        5: "Preferisco approfondire i problemi piuttosto che descriverli semplicemente",
+        6: "Quando sono sconvolto/a non so se sono triste, spaventato/a o arrabbiato/a",
+        7: "Sono spesso disorientato dalle sensazioni che provo nel mio corpo",
+        8: "Preferisco lasciare che le cose seguano il loro corso piuttosto che capire perché sono andate in quel modo",
+        9: "Provo sentimenti che non riesco proprio ad identificare",
+        10: "E’ essenziale conoscere le proprie emozioni",
+        11: "Mi è difficile descrivere ciò che provo per gli altri",
+        12: "Gli altri mi chiedono di parlare di più dei miei sentimenti",
+        13: "Non capisco cosa stia accadendo dentro di me",
+        14: "Spesso non so perché mi arrabbio",
+        15: "Con le persone preferisco parlare delle cose di tutti i giorni piuttosto che delle loro emozioni",
+        16: "Preferisco vedere spettacoli leggeri piuttosto che spettacoli a sfondo psicologico",
+        17: "Mi è difficile rilevare i miei sentimenti più profondi anche agli amici più intimi",
+        18: "Riesco a sentirmi vicino a una persona, anche se ci capita di stare in silenzio",
+        19: "Trovo che l’esame dei miei sentimenti mi serve a risolvere i miei problemi personali",
+        20: "Cercare significati nascosti in films o commedie distoglie dal piacere dello spettacolo"
+    }
+    return questions
+def getBAIQuestions():
+    # Create dictionary for question numbers and questions
+    questions = {
+        1: "Intorpidimento o formicolio",
+        2: "Vampate di calore",
+        3: "Gambe vacillanti",
+        4: "Incapacità a rilassarsi",
+        5: "Paura che qualcosa di molto brutto possa accadere",
+        6: "Vertigini o sensazioni di stordimento",
+        7: "Batticuore",
+        8: "Umore instabile",
+        9: "Agitazione in tutto il corpo",
+        10: "Paura di perdere il controllo",
+        11: "Respiro affannoso",
+        12: "Paura di morire",
+        13: "Sentirsi impauriti",
+        14: "Essere terrorizzati",
+        15: "Sentirsi Agitati",
+        16: "Sensazione di Soffocamento",
+        17: "Mani che tremano",
+        18: "Dolori intestinali o di stomaco",
+        19: "Sentirsi svenire",
+        20: "Sentirsi arrossire",
+        21: "Sentirsi sudati (non a causa del calore)"
+    }
+    return questions
+def getBDIQuestions():
+    # Create dictionary for question numbers and questions
+    questions = {
+        1: "Tristezza",
+        2: "Pessimismo",
+        3: "Fallimento",
+        4: "Perdita di piacere",
+        5: "Senso di colpa",
+        6: "Sentimenti di punizione",
+        7: "Autostima",
+        8: "Autocritica",
+        9: "Suicidio",
+        10: "Pianto",
+        11: "Agitazione",
+        12: "Perdita di interessi",
+        13: "Indecisione",
+        14: "Senso di inutilità",
+        15: "Perdita di energia",
+        16: "Sonno",
+        17: "Appetito",
+        18: "Concentrazione",
+        19: "Fatica",
+        20: "Sesso"
+    }
+    return questions
+
+def getDERSQuestions():
+    # Create dictionary for question numbers and questions
+    questions = {
+        1: "Distinguo le mie emozioni",
+        2: "Presto attenzione a ciò che provo",
+        3: "Sento che le emozioni mi travolgono e sono fuori dal mio controllo",
+        4: "Non ho idea di come mi sento",
+        5: "Ho difficoltà a capire il significato dei miei sentimenti",
+        6: "Sono attento ai miei sentimenti",
+        7: "So esattamente quello che sto provando",
+        8: "Do importanza a quello che sto provando",
+        9: "Sono confusa/o rispetto a ciò che sto provando",
+        10: "Quando sono turbata/o, riconosco le mie emozioni",
+        11: "Quando sono turbata/o, mi arrabbio con me stessa/o perchè mi sento così",
+        12: "Quando sono turbata/o, mi imbarazza sentirmi così",
+        13: "Quando sono turbata/o, ho difficoltà a portare a termine il mio lavoro",
+        14: "Quando sono turbata/o, perdo il controllo",
+        15: "Quando sono turbata/o, credo che rimarrò così a lungo",
+        16: "Quando sono turbata/o, credo che finirò col sentirmi molto depressa/o",
+        17: "Quando sono turbata/o, credo che i miei sentimenti siano validi e importanti",
+        18: "Quando sono turbata/o, ho difficoltà a prestare attenzione ad altre cose",
+        19: "Quando sono turbata/o, mi sento fuori controllo",
+        20: "Quando sono turbata/o, riesco sempre a fare le mie cose",
+        21: "Quando sono turbata/o, mi vergogno di me stessa/o per il fatto sentirmi così",
+        22: "Quando sono turbata/o, so che alla fine riesco a trovare un modo per sentirmi meglio",
+        23: "Quando sono turbata/o, mi sento debole",
+        24: "Quando sono turbata/o, mi sembra di non potere rispondere delle mie azioni",
+        25: "Quando sono turbata/o, mi sento colpevole per sentirmi così",
+        26: "Quando sono turbata/o, ho difficoltà a concentrarmi",
+        27: "Quando sono turbata/o, ho difficoltà a controllare i miei comportamenti",
+        28: "Quando sono turbata/o, credo che non ci sia niente che possa farmi stare meglio",
+        29: "Quando sono turbata/o, mi irrito con me stessa/o per il fatto di sentirmi così",
+        30: "Quando sono turbata/o, comincio a sentirmi molto dispiaciuta/o per me stessa/o",
+        31: "Quando sono turbata/o, credo che crogiolarmi in quello stato sia tutto ciò che posso fare",
+        32: "Quando sono turbata/o, perdo il controllo sui miei comportamenti",
+        33: "Quando sono turbata/o, ho difficoltà a pensare ad altro",
+        34: "Quando sono turbata/o, mi prendo del tempo per capire cosa sto provando",
+        35: "Quando sono turbata/o, mi ci vuole molto tempo per capire cosa sto provando",
+        36: "Quando sono turbata/o, sembra che le mie emozioni mi travolgano"
+    }
+    return questions
+
+def createOrUpdateExcelFile(answers, identifier, questions, code):
+    # Check if file exists
+    path_dir = 'tmp/excel'
+    path_excel = f'{path_dir}/{identifier}.xlsx'
+    try:
+        if not os.path.exists(path_dir):
+            os.makedirs(path_dir)
+        workbook = openpyxl.load_workbook(path_excel)
+    except FileNotFoundError:
+        # Create new workbook if file doesn't exist
+        workbook = openpyxl.Workbook()
+        worksheet = workbook.active
+        last_row = 2
+    else:
+        # Open existing worksheet
+        worksheet = workbook.active
+        last_row = worksheet.max_row + 1
+
+    # Add first row with Employee code
+    worksheet.append(['User Code:', code])
+    # Add second row with headers
+    worksheet.append(['Question number', 'Question', 'User Answer'])
+    # Add rows for each question
+    print(f"Number of questions: {len(answers)}")
+    print(answers)
+    for i, a in enumerate(answers):
+        print(f"Adding row for question {i + 1}")
+        if identifier == "bdi" :
+            row = [i+1, questions[i+1], a+1]
+        else:
+            row = [i+1, questions[i+1], a]
+
+        worksheet.append(row)
+    worksheet.append(['', '', ''])
+    # Save workbook
+    workbook.save(path_excel)
+
 
 class GetStep(APIView):
     def post(self, request):
@@ -209,15 +414,21 @@ class CompleteNewRequest(APIView):
 
     def post(self, request):
         employee_id = request.data.get('employee_id', None)
-        notCompletedRequests = Request.objects.exclude(id__in=
-                               Session.objects.filter(employee_id=employee_id).values_list('request_id', flat=True))
-        if(notCompletedRequests.count() == 0):
-            return Response(400)
-        max = notCompletedRequests.count() - 1
-        min = 0
-        n = random.randint(min, max)
-        serializer = RequestOnlyTextSerializer(notCompletedRequests[n])
-        print(serializer.data)
+        employee = get_object_or_404(Employee, id=employee_id)
+        if(employee.step != 5):
+            #pick random emotion
+            notCompletedRequests = Request.objects.exclude(id__in=
+                                   Session.objects.filter(employee_id=employee_id).values_list('request_id', flat=True))
+            if(notCompletedRequests.count() == 0):
+                return Response(400)
+            max = notCompletedRequests.count() - 1
+            min = 0
+            n = random.randint(min, max)
+            serializer = RequestOnlyTextSerializer(notCompletedRequests[n])
+        else:
+            #trial request
+            request = get_object_or_404(Request, id=1)
+            serializer = RequestOnlyTextSerializer(request)
         return Response(serializer.data)
 class GetQuestionnaireRequest(APIView):
     permission_classes = (IsAuthenticated,)

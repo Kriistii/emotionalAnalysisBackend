@@ -34,6 +34,13 @@
         "fields" : {
             "emotion_name" : "sr",
             "extended_name": "Surprise"
+        },
+    {
+        "model" : "employee.Emotion",
+        "pk" : 6,
+        "fields" : {
+            "emotion_name" : "nt",
+            "extended_name": "Neutrality"
         }
     }
 ]

@@ -5,7 +5,27 @@ from dj_rest_auth.serializers import UserDetailsSerializer
 class EmployeeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Employee
-        fields = ['id', 'name', 'surname', 'birthday', 'stressed', 'company', 'user', 'step']
+        fields = ['id', 'name', 'surname', 'age', 'stressed', 'company', 'user', 'step']
+
+
+class EmployeeGeneralSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Employee
+        fields = ['age', 'faculty', 'education', 'gender', 'step']
+
+
+class EmployeeCodeSerializer(serializers.ModelSerializer):
+    code = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Employee
+        fields = ['name', 'surname', 'age', 'code']
+
+    def get_code(self, obj):
+        name = obj.name[:2].upper()
+        surname = obj.surname[:2].upper()
+        age = str(obj.age)
+        return f"{name}{surname}{age}"
 
 
 class EmployeeStepSerializer(serializers.ModelSerializer):
