@@ -414,15 +414,21 @@ class CompleteNewRequest(APIView):
 
     def post(self, request):
         employee_id = request.data.get('employee_id', None)
-        notCompletedRequests = Request.objects.exclude(id__in=
-                               Session.objects.filter(employee_id=employee_id).values_list('request_id', flat=True))
-        if(notCompletedRequests.count() == 0):
-            return Response(400)
-        max = notCompletedRequests.count() - 1
-        min = 0
-        n = random.randint(min, max)
-        serializer = RequestOnlyTextSerializer(notCompletedRequests[n])
-        print(serializer.data)
+        employee = get_object_or_404(Employee, id=employee_id)
+        if(employee.step != 5):
+            #pick random emotion
+            notCompletedRequests = Request.objects.exclude(id__in=
+                                   Session.objects.filter(employee_id=employee_id).values_list('request_id', flat=True))
+            if(notCompletedRequests.count() == 0):
+                return Response(400)
+            max = notCompletedRequests.count() - 1
+            min = 0
+            n = random.randint(min, max)
+            serializer = RequestOnlyTextSerializer(notCompletedRequests[n])
+        else:
+            #trial request
+            request = get_object_or_404(Request, id=1)
+            serializer = RequestOnlyTextSerializer(request)
         return Response(serializer.data)
 class GetQuestionnaireRequest(APIView):
     permission_classes = (IsAuthenticated,)

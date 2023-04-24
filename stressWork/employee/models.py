@@ -134,6 +134,7 @@ class SessionResults(models.Model):
     surprise = models.FloatField(null=True)
     anger = models.FloatField(null=True)
     fear = models.FloatField(null=True)
+    neutrality = models.FloatField(null=True)
     objects = models.Manager()
 
     def __str__(self) -> str:

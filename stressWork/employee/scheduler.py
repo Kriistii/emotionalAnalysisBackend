@@ -29,11 +29,11 @@ def save_results(session, text_results, audio_results, video_results):
     result_audio = SessionResults(session=Session(pk=session.id), audio=True,
                                  happiness=audio_results['hp'],  sadness=audio_results['sd'],
                                  anger=audio_results['an'], fear=audio_results['fr'],
-                                 surprise=audio_results['sr'])
+                                 surprise=audio_results['sr'],neurality=audio_results['nt'])
     result_video = SessionResults(session=Session(pk=session.id), video=True,
                                  happiness=video_results['hp'],  sadness=video_results['sd'],
                                  anger=video_results['an'], fear=video_results['fr'],
-                                 surprise=video_results['sr'])
+                                 surprise=video_results['sr'], neutrality=['nt'])
     result_text.save()
     result_audio.save()
     result_video.save()
@@ -54,7 +54,7 @@ def run_analysis():
         video_analysis_results = video.analyze_video(session_serialized['id'], session_serialized['full_video_path'])
         save_results(s, text_analysis_results, audio_analysis_results, video_analysis_results)
         sum_emotions = {}
-        emotions = ['sd', 'an', 'fr', 'hp', 'sr']
+        emotions = ['sd', 'an', 'fr', 'hp', 'sr', 'nt']
         for e in emotions:
             score_text = 0
             score_video = 0
