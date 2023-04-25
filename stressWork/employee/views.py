@@ -23,6 +23,7 @@ import os
 import openpyxl
 import json
 import random
+from django.http import HttpResponse
 
 
 class EmployeeStatsAPIView(APIView):
@@ -40,15 +41,17 @@ class EmployeeStatsAPIView(APIView):
 
 class NewEmployee(APIView):
     def post(self, request):
-        request.data['company'] = request.session['companyId']
+
 
         user = AppUsers.objects.create(email=request.data['email'], password=request.data['password'], is_active=True,
                                        is_staff=False,
                                        is_superuser=False)
-        request.data['user'] = user.id
-        request.data['step'] = 0
-
-        serializer = EmployeeStepSerializer(data=request.data)
+        data = {}
+        data['user'] = user.id
+        data['step'] = 0
+        data['session_no'] = 1
+        data['company'] = 1
+        serializer = EmployeeUserStepSerializer(data=data)
         if serializer.is_valid():
             user.set_password(request.data['password'])
             user.save()
@@ -57,6 +60,32 @@ class NewEmployee(APIView):
             return Response(status=status.HTTP_201_CREATED)
 
         return Response(data=serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class downloadBai(APIView):
+    def get(self,request):
+        return download_excel('bai')
+class downloadTas(APIView):
+    def get(self,request):
+        return download_excel('tas')
+class downloadPanas(APIView):
+    def get(self,request):
+        return download_excel('panas')
+class downloadDers(APIView):
+    def get(self,request):
+        return download_excel('ders')
+class downloadBdi(APIView):
+    def get(self, request):
+        return download_excel('bdi')
+
+
+
+def download_excel(identifier):
+    path_dir = 'tmp/excel'
+    path_excel = f'{path_dir}/{identifier}.xlsx'
+    with open(path_excel, 'rb') as f:
+        response = HttpResponse(f.read(), content_type='application/vnd.ms-excel')
+        response['Content-Disposition'] = f'attachment; filename={identifier}.xlsx'
+        return response
 
 class RegistrationForm(APIView):
     def post(self, request):
@@ -271,7 +300,7 @@ def createOrUpdateExcelFile(answers, identifier, questions, code):
     for i, a in enumerate(answers):
         print(f"Adding row for question {i + 1}")
         if identifier == "bdi" :
-            row = [i+1, questions[i+1], a+1]
+            row = [i+1, questions[i+1], int(a) + 1]
         else:
             row = [i+1, questions[i+1], a]
 

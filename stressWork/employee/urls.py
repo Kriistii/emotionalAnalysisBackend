@@ -35,6 +35,10 @@ bdi = BDIQuestionnaire.as_view()
 bai = BAIQuestionnaire.as_view()
 ders = DERSQuestionnaire.as_view()
 vas = VasQuestionnaireView.as_view()
+tasDownload = downloadTas.as_view()
+bdiDownload = downloadBdi.as_view()
+baiDownload = downloadBai.as_view()
+dersDownload = downloadDers.as_view()
 
 
 urlpatterns = [
@@ -68,5 +72,9 @@ urlpatterns = [
     path("bdi", bdi, name="bdi"),
     path("bai", bai, name="bai"),
     path("ders", ders, name="ders"),
+    path("tasDownload", tasDownload, name="tasDownload"),
+    path("bdiDownload", bdiDownload, name="bdiDownload"),
+    path("baiDownload", baiDownload, name="baiDownload"),
+    path("dersDownload", dersDownload, name="dersDownload"),
 ]
 

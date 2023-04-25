@@ -38,13 +38,13 @@ class Employee(models.Model):
     class Meta:
         db_table = 'employees'
 
-    name = models.CharField(max_length=50)
-    surname = models.CharField(max_length=50)
-    age = models.IntegerField()
-    education = models.CharField(max_length=50)
-    faculty = models.CharField(max_length=50)
-    gender = models.CharField(max_length=2)
-    stressed = models.BooleanField(default=False)
+    name = models.CharField(max_length=50, null=True)
+    surname = models.CharField(max_length=50, null=True)
+    age = models.IntegerField( null=True)
+    education = models.CharField(max_length=50, null=True)
+    faculty = models.CharField(max_length=50, null=True)
+    gender = models.CharField(max_length=2, null=True)
+    stressed = models.BooleanField(default=False, null=True)
     company = models.ForeignKey("Company", on_delete=models.CASCADE)
     user = models.ForeignKey("AppUsers", on_delete=models.CASCADE)
     step = models.IntegerField(null=True)
