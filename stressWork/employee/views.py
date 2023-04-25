@@ -63,6 +63,7 @@ class RegistrationForm(APIView):
         employee = get_object_or_404(Employee, id=request.data['employee'])
         employeeData = request.data['data']
         employeeData['step'] = 1
+        employeeData['session_no'] = 1
         serializer = EmployeeGeneralSerializer(employee,data=employeeData)
         if serializer.is_valid():
             serializer.save()
@@ -394,6 +395,7 @@ class NewSession(APIView):
         name = uuid.uuid4()
         request_id = request.data.get('request_id', None)
         employee_id = request.data.get('employee_id', None)
+        employee = get_object_or_404(Employee, id=employee_id)
         response = Response("Error")
         if request.FILES.get('video-blob', None):
             newSession = session.createSession(employee_id, request_id)
@@ -403,9 +405,11 @@ class NewSession(APIView):
             audio_path = audio.video_to_audio(session_id, name)
             text = audio.speech_to_text(session_id, name)
             newSession.full_video_path = video_path
-            newSession.full_audio_path = audio_path,
+            newSession.full_audio_path = audio_path
             newSession.text = text
             newSession.save()
+            employee.step = employee.step + 1
+            employee.save()
             return Response("Success")
         return response
 
@@ -452,21 +456,43 @@ class FillInQuestionnaire(APIView):
         print(request.data)
 
         employee_id = request.data.get('employee_id', None)
-        request_id = request.data.get('request_id', None)
+        employee = get_object_or_404(Employee, id=employee_id)
+        step = employee.step
+        request_id = step - 4
         happiness = request.data.get('happiness', None)
         sadness = request.data.get('sadness', None)
         anger = request.data.get('anger', None)
         fear = request.data.get('fear', None)
         surprise = request.data.get('surprise', None)
-        emotion_ids = [1, 2, 3, 4, 5]
-        emotion_score = [anger, fear, happiness, sadness, surprise]
-        for key, value in enumerate(emotion_ids):
-            questionnaire = Questionnaire(employee=Employee(pk=employee_id), request=Request(pk=request_id),
-                              emotion=Emotion(pk=value), score=emotion_score[key])
-            questionnaire.save()
+        neutrality = request.data.get('neutrality', None)
+        new_emotion = request.data.get('new_emotion', None)
+        new_emotion_score = request.data.get('new_emotion_score', None)
+        questionnaire = Questionnaire(employee=Employee(pk=employee_id), request=Request(pk=request_id),
+                                      happiness=happiness, sadness=sadness, anger=anger, fear=fear,
+                                      surprise=surprise, neutrality=neutrality, new_emotion=new_emotion,
+                                      new_emotion_score=new_emotion_score)
+        questionnaire.save()
 
         return Response('Ok')
 
+class VasQuestionnaireView(APIView):
+    permission_classes = (IsAuthenticated,)
+
+    def post(self, request):
+        print(request.data)
+
+        employee_id = request.data.get('employee_id', None)
+        employee = get_object_or_404(Employee, id=employee_id)
+        step = employee.step
+        request_id = step - 4
+        first = request.data.get('first', None)
+        second = request.data.get('second', None)
+        third = request.data.get('third', None)
+        vas = Vas(employee=Employee(pk=employee_id), request=Request(pk=request_id),
+                          first_question=first, second_question=second, third_question=third)
+        vas.save()
+
+        return Response('Ok')
 class CreateEmployeeAPIView(APIView):
     # TODO request filter
     def post(self, request):

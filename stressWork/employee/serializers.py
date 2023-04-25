@@ -5,13 +5,13 @@ from dj_rest_auth.serializers import UserDetailsSerializer
 class EmployeeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Employee
-        fields = ['id', 'name', 'surname', 'age', 'stressed', 'company', 'user', 'step']
+        fields = ['id', 'name', 'surname', 'age', 'stressed', 'company', 'user', 'step', 'session_no']
 
 
 class EmployeeGeneralSerializer(serializers.ModelSerializer):
     class Meta:
         model = Employee
-        fields = ['age', 'faculty', 'education', 'gender', 'step']
+        fields = ['age', 'faculty', 'education', 'gender', 'step', 'session_no']
 
 
 class EmployeeCodeSerializer(serializers.ModelSerializer):

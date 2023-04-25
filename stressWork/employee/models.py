@@ -48,6 +48,7 @@ class Employee(models.Model):
     company = models.ForeignKey("Company", on_delete=models.CASCADE)
     user = models.ForeignKey("AppUsers", on_delete=models.CASCADE)
     step = models.IntegerField(null=True)
+    session_no = models.IntegerField(null=True)
 
     objects = models.Manager()
 
@@ -143,14 +144,33 @@ class Questionnaire(models.Model):
     class Meta:
         db_table = 'questionnaire'
 
-    emotion = models.ForeignKey("Emotion", on_delete=models.CASCADE)
+    happiness = models.IntegerField(null=True)
+    sadness = models.IntegerField(null=True)
+    surprise = models.IntegerField(null=True)
+    anger = models.IntegerField(null=True)
+    fear = models.IntegerField(null=True)
+    neutrality = models.IntegerField(null=True)
+    new_emotion_score = models.IntegerField(null=True)
+    new_emotion = models.CharField(null=True, max_length=20)
     request = models.ForeignKey("Request", on_delete=models.CASCADE)
     employee = models.ForeignKey("Employee", on_delete=models.CASCADE)
-    score = models.IntegerField(null=True)
     objects = models.Manager()
 
     def __str__(self) -> str:
-        return f"{'emotion:' +  str(self.emotion) + 'request:' + str(self.request)+ 'score:' + str(self.score)}"
+        return f"{ 'request:' + str(self.request)}"
+class Vas(models.Model):
+    class Meta:
+        db_table = 'vas'
+
+    first_question = models.IntegerField(null=True)
+    second_question = models.IntegerField(null=True)
+    third_question = models.IntegerField(null=True)
+    request = models.ForeignKey("Request", on_delete=models.CASCADE)
+    employee = models.ForeignKey("Employee", on_delete=models.CASCADE)
+    objects = models.Manager()
+
+    def __str__(self) -> str:
+        return f"{ 'request:' + str(self.request)}"
 
 class StressRecord(models.Model):
     class Meta:
