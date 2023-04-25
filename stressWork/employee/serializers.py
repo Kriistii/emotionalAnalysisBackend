@@ -32,6 +32,10 @@ class EmployeeStepSerializer(serializers.ModelSerializer):
     class Meta:
         model = Employee
         fields = ['step']
+class EmployeeUserStepSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Employee
+        fields = ['step', 'user', 'company', 'session_no']
 
 
 class EmployerSerializer(serializers.ModelSerializer):
