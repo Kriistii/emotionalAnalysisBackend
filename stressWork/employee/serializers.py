@@ -1,11 +1,11 @@
 from rest_framework import serializers
-from .models import Employer, Employee, StressRecord,  AppUsers,  Emotion, Session, Request, SessionResults
+from .models import Employer, Employee, StressRecord,  AppUsers,  Emotion, Session, Request, SessionResults, Questionnaire
 from dj_rest_auth.serializers import UserDetailsSerializer
 
 class EmployeeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Employee
-        fields = ['id', 'name', 'surname', 'age', 'stressed', 'company', 'user', 'step', 'session_no']
+        fields = ['id', 'name', 'surname', 'age', 'stressed', 'company', 'user', 'step', 'session_no', 'username']
 
 class EmployeeDataSerializer(serializers.ModelSerializer):
     class Meta:
@@ -94,6 +94,11 @@ class ResultsSerializerWithSession(serializers.ModelSerializer):
     class Meta:
         model = SessionResults
         fields = ['text', 'audio', 'video', 'happiness', 'sadness', 'anger', 'fear', 'surprise']
+
+class QuestionnaireSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Questionnaire
+        fields = ('happiness', 'sadness', 'anger', 'fear', 'surprise', 'neutrality', 'new_emotion', 'new_emotion_score')
 
 
 

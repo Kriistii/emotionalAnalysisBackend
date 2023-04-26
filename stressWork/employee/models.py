@@ -107,7 +107,7 @@ class Session(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, unique=True)
     employee = models.ForeignKey("Employee", on_delete=models.CASCADE)
     request = models.ForeignKey("Request", on_delete=models.CASCADE)
-    date = models.DateTimeField()
+    date = models.DateTimeField(null=True)
     first_prevailing_emotion = models.ForeignKey("Emotion", related_name="first_prevailing_emotion", null=True,
                                                  on_delete=models.DO_NOTHING)
     second_prevailing_emotion = models.ForeignKey("Emotion", related_name="second_prevailing_emotion", null=True,

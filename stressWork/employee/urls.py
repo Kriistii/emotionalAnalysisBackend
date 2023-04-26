@@ -7,7 +7,6 @@ employee_api = EmployeeAPIView.as_view()
 employee_create = CreateEmployeeAPIView.as_view()
 employer_create = CreateEmployerAPIView.as_view()
 employee_detail_api = EmployeeDetailAPIView.as_view()
-timer_chat_over = TimeChatOverEmployee.as_view()
 retrieve_chat_logs_employee = RetrieveChatLogsEmployee.as_view()
 
 retrieve_employee_information = RetrieveEmployeeInformation.as_view()
@@ -36,11 +35,14 @@ bai = BAIQuestionnaire.as_view()
 ders = DERSQuestionnaire.as_view()
 panas = PANASQuestionnaire.as_view()
 vas = VasQuestionnaireView.as_view()
+vasDownload = downloadVas.as_view()
+firstvasDownload = downloadFirstVas.as_view()
 tasDownload = downloadTas.as_view()
 bdiDownload = downloadBdi.as_view()
 baiDownload = downloadBai.as_view()
 dersDownload = downloadDers.as_view()
 panasDownload = downloadPanas.as_view()
+retrieveQuestionnaireData = retrieveQuestionnaireDataView.as_view()
 
 
 urlpatterns = [
@@ -48,7 +50,6 @@ urlpatterns = [
     path('register-notif-token/', FCMDeviceAuthorizedViewSet.as_view({'post': 'create'}), name='create_fcm_device'),
     path('retrieveEmployeeInformation', retrieve_employee_information, name="retrieve-employee-information" ),
     path('retrieveEmployerInformation', retrieve_employer_information, name="retrieve-employer-information"),
-    path('timerChatOver', timer_chat_over, name="timer_chat_over"),
     path("testVideoAnalysis", test_video_analysis, name="test-video-analysis"),
     path("getAnalysis/<uuid:session_id>", interaction_details, name="interaction_details"),
     path("createEmployee", employee_create, name="employee-create"),
@@ -79,5 +80,8 @@ urlpatterns = [
     path("bdiDownload", bdiDownload, name="bdiDownload"),
     path("baiDownload", baiDownload, name="baiDownload"),
     path("panasDownload", panasDownload, name="panasDownload"),
+    path("vasDownload", vasDownload, name="vasDownload"),
+    path("firstvasDownload", firstvasDownload, name="firstvasDownload"),
+    path("retrieveQuestionnaireData/", retrieveQuestionnaireData, name="retrieveQuestionnaireData"),
 ]
 
