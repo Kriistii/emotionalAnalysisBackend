@@ -51,6 +51,9 @@ class NewEmployee(APIView):
         data['step'] = 0
         data['session_no'] = 1
         data['company'] = 1
+        data['name'] = request.data['name']
+        data['surname'] = request.data['surname']
+
         serializer = EmployeeUserStepSerializer(data=data)
         if serializer.is_valid():
             user.set_password(request.data['password'])
@@ -91,8 +94,13 @@ class RegistrationForm(APIView):
     def post(self, request):
         employee = get_object_or_404(Employee, id=request.data['employee'])
         employeeData = request.data['data']
+        print(employeeData)
         employeeData['step'] = 1
         employeeData['session_no'] = 1
+        name = employee.name[:2].upper()
+        surname = employee.surname[:2].upper()
+        age = str(employeeData['age'])
+        employeeData['username'] = f"{name}{surname}{age}"
         serializer = EmployeeGeneralSerializer(employee,data=employeeData)
         if serializer.is_valid():
             serializer.save()
@@ -140,6 +148,20 @@ class BAIQuestionnaire(APIView):
         employee.step = 4
         employee.save()
         return Response(status=status.HTTP_200_OK)
+
+class PANASQuestionnaire(APIView):
+    def post(self, request):
+        employee_id = request.data.get('employee', None)
+        answers = request.data.getlist('question')
+        print(answers)
+        employee = get_object_or_404(Employee, id=employee_id)
+        serializer = EmployeeCodeSerializer(employee)
+        code = serializer.data['code']
+        questions = getPanasQuestions()
+        createOrUpdateExcelFile(answers, 'panas', questions, code)
+        employee.step = 10
+        employee.save()
+        return Response(status=status.HTTP_200_OK)
 class DERSQuestionnaire(APIView):
     def post(self, request):
         employee_id = request.data.get('employee', None)
@@ -177,6 +199,34 @@ def getTasQuestions():
         19: "Trovo che l’esame dei miei sentimenti mi serve a risolvere i miei problemi personali",
         20: "Cercare significati nascosti in films o commedie distoglie dal piacere dello spettacolo"
     }
+    return questions
+def getPanasQuestions():
+    # Create dictionary for question numbers and questions
+
+    questions = {
+             1: "Attenta/o",
+             2: "Orgogliosa/o",
+             3: "Turbata/o",
+             4: "Entusiasta",
+             5: "Forte",
+             6: "Vergogna",
+             7: "Irritabile",
+             8: "Determinata/o",
+             9: "Colpevole",
+             10: "Attiva/o",
+             11: "Ispirata/o",
+             12: "Spaventata/o",
+             13: "Nervosa/o",
+             14: "Interessata/o",
+             15: "Eccitata/o",
+             16: "Agitata/o",
+             17: "Impaurita/o",
+             18: "Concentrata/o",
+             19: "Ostile",
+             20: "Angosciata/o"
+         }
+
+
     return questions
 def getBAIQuestions():
     # Create dictionary for question numbers and questions
@@ -284,11 +334,9 @@ def createOrUpdateExcelFile(answers, identifier, questions, code):
         # Create new workbook if file doesn't exist
         workbook = openpyxl.Workbook()
         worksheet = workbook.active
-        last_row = 2
     else:
         # Open existing worksheet
         worksheet = workbook.active
-        last_row = worksheet.max_row + 1
 
     # Add first row with Employee code
     worksheet.append(['User Code:', code])
@@ -486,8 +534,8 @@ class FillInQuestionnaire(APIView):
 
         employee_id = request.data.get('employee_id', None)
         employee = get_object_or_404(Employee, id=employee_id)
-        step = employee.step
-        request_id = step - 4
+        request_id = request.data.get('request_id', None)
+        request_object = get_object_or_404(Request, id=request_id)
         happiness = request.data.get('happiness', None)
         sadness = request.data.get('sadness', None)
         anger = request.data.get('anger', None)
@@ -502,6 +550,32 @@ class FillInQuestionnaire(APIView):
                                       new_emotion_score=new_emotion_score)
         questionnaire.save()
 
+        # Check if file exists
+        path_dir = f'tmp/excel/{employee_id}'
+        path_excel = f'{path_dir}/vas.xlsx'
+        try:
+            if not os.path.exists(path_dir):
+                os.makedirs(path_dir)
+            wb = openpyxl.load_workbook(path_excel)
+        except FileNotFoundError:
+            # Create new workbook if file doesn't exist
+            wb = openpyxl.Workbook()
+            ws = wb.active
+            # Write header row
+            ws.append(
+                [' Username', 'Request', 'Happiness', 'Sadness', 'Anger', 'Fear', 'Surprise', 'Neutrality',
+                 'New Emotion', 'New Emotion Score'])
+        else:
+            # Open existing worksheet
+            ws = wb.active
+
+        # Write data row
+        ws.append([employee.username, request_object.emotion, happiness, sadness, anger, fear, surprise, neutrality,
+                   new_emotion, new_emotion_score])
+
+        # Save the workbook
+        wb.save(path_excel)
+
         return Response('Ok')
 
 class VasQuestionnaireView(APIView):
@@ -512,14 +586,38 @@ class VasQuestionnaireView(APIView):
 
         employee_id = request.data.get('employee_id', None)
         employee = get_object_or_404(Employee, id=employee_id)
-        step = employee.step
-        request_id = step - 4
+        request_id = request.data.get('request_id', None)
+        request_o = get_object_or_404(Request, id=request_id)
         first = request.data.get('first', None)
         second = request.data.get('second', None)
         third = request.data.get('third', None)
         vas = Vas(employee=Employee(pk=employee_id), request=Request(pk=request_id),
                           first_question=first, second_question=second, third_question=third)
         vas.save()
+
+        path_dir = f'tmp/excel/{employee_id}'
+        path_excel = f'{path_dir}/firstvas.xlsx'
+        try:
+            if not os.path.exists(path_dir):
+                os.makedirs(path_dir)
+            wb = openpyxl.load_workbook(path_excel)
+        except FileNotFoundError:
+            # Create new workbook if file doesn't exist
+            wb = openpyxl.Workbook()
+            ws = wb.active
+            # Write header row
+            ws.append(
+                [' Username', 'Request', 'First Question', 'Second Question', 'Third Question'])
+        else:
+            # Open existing worksheet
+            ws = wb.active
+
+        # Write data row
+        ws.append(
+            [employee.username, request_o.emotion, first, second, third])
+
+        # Save the workbook
+        wb.save(path_excel)
 
         return Response('Ok')
 class CreateEmployeeAPIView(APIView):
@@ -599,7 +697,7 @@ class RetrieveEmployeeInformation(APIView):
     def post(self, request):
         user_id = request.data.get('user_id', None)
         if user_id is not None:
-            emp = EmployeeSerializer(get_object_or_404(Employee, user=get_object_or_404(AppUsers, pk=user_id))).data
+            emp = EmployeeDataSerializer(get_object_or_404(Employee, user=get_object_or_404(AppUsers, pk=user_id))).data
             return Response({"employee": emp})
         else:
             return Response("User id not found")

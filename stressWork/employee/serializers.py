@@ -7,11 +7,16 @@ class EmployeeSerializer(serializers.ModelSerializer):
         model = Employee
         fields = ['id', 'name', 'surname', 'age', 'stressed', 'company', 'user', 'step', 'session_no']
 
+class EmployeeDataSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Employee
+        fields = ['id', 'name', 'surname', 'age', 'stressed', 'company', 'user', 'step', 'session_no', 'username']
+
 
 class EmployeeGeneralSerializer(serializers.ModelSerializer):
     class Meta:
         model = Employee
-        fields = ['age', 'faculty', 'education', 'gender', 'step', 'session_no']
+        fields = ['age', 'faculty', 'education', 'gender', 'step', 'session_no', 'username']
 
 
 class EmployeeCodeSerializer(serializers.ModelSerializer):
@@ -35,7 +40,7 @@ class EmployeeStepSerializer(serializers.ModelSerializer):
 class EmployeeUserStepSerializer(serializers.ModelSerializer):
     class Meta:
         model = Employee
-        fields = ['step', 'user', 'company', 'session_no']
+        fields = ['name', 'surname','step', 'user', 'company', 'session_no']
 
 
 class EmployerSerializer(serializers.ModelSerializer):

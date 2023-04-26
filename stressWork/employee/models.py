@@ -40,7 +40,8 @@ class Employee(models.Model):
 
     name = models.CharField(max_length=50, null=True)
     surname = models.CharField(max_length=50, null=True)
-    age = models.IntegerField( null=True)
+    username = models.CharField(max_length=10, null=True)
+    age = models.IntegerField(null=True)
     education = models.CharField(max_length=50, null=True)
     faculty = models.CharField(max_length=50, null=True)
     gender = models.CharField(max_length=2, null=True)
@@ -90,6 +91,7 @@ class Request(models.Model):
         db_table = 'request'
 
     text = models.TextField(max_length=400)
+    emotion = models.CharField(max_length=400, null=True)
     created_at = models.DateTimeField(null=True)
     created_by = models.IntegerField(null=True)
     objects = models.Manager()
