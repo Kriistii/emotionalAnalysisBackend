@@ -79,6 +79,14 @@ class downloadDers(APIView):
 class downloadBdi(APIView):
     def get(self, request):
         return download_excel('bdi')
+class downloadVas(APIView):
+    def post(self, request):
+        print(request.data)
+        return download_excel(f'/{request.data["employee_id"]}/vas')
+class downloadFirstVas(APIView):
+    def post(self, request):
+        print(request.data)
+        return download_excel(f'{request.data["employee_id"]}/firstvas')
 
 
 
@@ -415,9 +423,9 @@ class GetInteractionSummary(APIView):
 
         result = Session.objects\
                 .filter(employee__company=company_id)\
-                .values('employee__id', 'employee__name', 'employee__surname', 'employee__stressed')\
+                .values('employee__id', 'employee__username', 'employee__stressed')\
                 .annotate(lastDate=Max('date'), sessions=Count('id'))\
-                .order_by('employee__name', 'employee__surname')
+                .order_by('employee__id')
 
         return Response(result)
 
@@ -578,6 +586,18 @@ class FillInQuestionnaire(APIView):
 
         return Response('Ok')
 
+class retrieveQuestionnaireDataView(APIView):
+    def get(self, request):
+        employee_id = request.GET.get('employee_id')
+        request_id = request.GET.get('request_id')
+
+        questionnaire = get_object_or_404(Questionnaire, employee_id=employee_id, request_id=request_id)
+
+        serializer = QuestionnaireSerializer(questionnaire)
+        serialized_data = serializer.data
+
+        return Response(serialized_data)
+
 class VasQuestionnaireView(APIView):
     permission_classes = (IsAuthenticated,)
 
@@ -715,36 +735,6 @@ class RetrieveEmployerInformation(APIView):
         else:
             return Response("User id not found")
 
-class TimeChatOverEmployee(APIView):
-    permission_classes = (IsAuthenticated,)
-
-    def post(self, request):
-        user_id = request.data.get('user_id', None)
-        if user_id is not None:
-            today = datetime.today()
-
-            year = today.year
-            month = today.month
-            day = today.day
-            number_chats = ChatSessionSerializer(ChatSession.objects.filter(employee=get_object_or_404(Employee, pk=user_id), date__year=year,
-                                date__month=month, date__day=day, completed=True), many=True).data
-            print(len(number_chats))
-            if len(number_chats) >= 2:
-                return Response({"text1": "Congratulations, we just talked for 3 minutes! Unfortunately you already "
-                                          "got 2 coins today, so I can't give you another one. But I am really happy "
-                                          "that we talked again.", "text2": "You can now stop the chat or continue "
-                                                                            "talking with me!", "coin": False})
-            else:
-                employee = Employee.objects.get(pk=user_id)
-                employee.coins = employee.coins + 1
-                employee.save()
-                return Response({"text1": "Congratulations, we just talked for 3 minutes! I just added one coin "
-                                          "to your balance to thank you for the time you spent talking with me. You will be able to "
-                                          "see it when you close the chat using the X on the top right! "
-                                    , "text2": "You can now stop the chat or continue "
-                                               "talking with me!", "coin": True})
-        else:
-            return Response("User id not found", status=404)
 
 class RetrieveSessionsEmployee(APIView):
     def get(self, request, employee_id):
@@ -806,6 +796,6 @@ class InteractionDetailsAPIView(APIView):
 
         return Response(data={"analysis": serializer, "empl_info": serializerEmployee, "csv_results" : csv_results,
                               'text' : response['text_results'], 'audio' : response['audio_results'],
-                              'video' : response['video_results']}, status=status.HTTP_200_OK)
+                              'video' : response['video_results'], 'request_id' : session.request_id}, status=status.HTTP_200_OK)
 
 

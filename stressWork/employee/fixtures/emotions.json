@@ -28,13 +28,15 @@
             "emotion_name" : "sd",
             "extended_name": "Sadness"
         }
-    },{
-        "model" : "employee.Emotion",
-        "pk" : 5,
-        "fields" : {
-            "emotion_name" : "sr",
+    },
+    {
+        "model": "employee.Emotion",
+        "pk": 5,
+        "fields": {
+            "emotion_name": "sr",
             "extended_name": "Surprise"
-        },
+        }
+    },
     {
         "model" : "employee.Emotion",
         "pk" : 6,

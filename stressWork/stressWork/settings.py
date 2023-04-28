@@ -36,7 +36,17 @@ ALLOWED_HOSTS = []
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:8080",
     "http://localhost:8081"
-]  
+]
+
+CORS_ALLOW_METHODS = [
+    'GET',
+    'POST',
+    'PUT',
+    'PATCH',
+    'DELETE',
+    'OPTIONS'
+]
+
 
 CSRF_TRUSTED_ORIGINS = ["http://localhost:8080","http://localhost:8081" ]
 
