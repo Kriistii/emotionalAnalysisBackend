@@ -101,13 +101,19 @@ def download_excel(identifier):
 class RegistrationForm(APIView):
     def post(self, request):
         employee = get_object_or_404(Employee, id=request.data['employee'])
+        if employee.step != 0:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
         employeeData = request.data['data']
         print(employeeData)
         employeeData['step'] = 1
         employeeData['session_no'] = 1
         name = employee.name[:2].upper()
         surname = employee.surname[:2].upper()
-        age = str(employeeData['age'])
+        if 'age' in employeeData:
+            age = str(employeeData['age'])
+        else:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
         employeeData['username'] = f"{name}{surname}{age}"
         serializer = EmployeeGeneralSerializer(employee,data=employeeData)
         if serializer.is_valid():
@@ -119,9 +125,11 @@ class RegistrationForm(APIView):
 class TasQuestionnaire(APIView):
     def post(self, request):
         employee_id = request.data.get('employee', None)
+        employee = get_object_or_404(Employee, id=employee_id)
+        if employee.step != 1:
+            return Response(data='Invalid step', status=status.HTTP_400_BAD_REQUEST)
         answers = request.data.getlist('question')
         print(answers)
-        employee = get_object_or_404(Employee, id=employee_id)
         serializer = EmployeeCodeSerializer(employee)
         code = serializer.data['code']
         questions = getTasQuestions()
@@ -133,9 +141,11 @@ class TasQuestionnaire(APIView):
 class BDIQuestionnaire(APIView):
     def post(self, request):
         employee_id = request.data.get('employee', None)
+        employee = get_object_or_404(Employee, id=employee_id)
+        if employee.step != 2:
+            return Response(data='Invalid step', status=status.HTTP_400_BAD_REQUEST)
         answers = request.data.getlist('question')
         print(answers)
-        employee = get_object_or_404(Employee, id=employee_id)
         serializer = EmployeeCodeSerializer(employee)
         code = serializer.data['code']
         questions = getBDIQuestions()
@@ -146,9 +156,11 @@ class BDIQuestionnaire(APIView):
 class BAIQuestionnaire(APIView):
     def post(self, request):
         employee_id = request.data.get('employee', None)
+        employee = get_object_or_404(Employee, id=employee_id)
+        if employee.step != 3:
+            return Response(data='Invalid step', status=status.HTTP_400_BAD_REQUEST)
         answers = request.data.getlist('question')
         print(answers)
-        employee = get_object_or_404(Employee, id=employee_id)
         serializer = EmployeeCodeSerializer(employee)
         code = serializer.data['code']
         questions = getBAIQuestions()
@@ -160,9 +172,11 @@ class BAIQuestionnaire(APIView):
 class PANASQuestionnaire(APIView):
     def post(self, request):
         employee_id = request.data.get('employee', None)
+        employee = get_object_or_404(Employee, id=employee_id)
+        if employee.step != 9:
+            return Response(data='Invalid step', status=status.HTTP_400_BAD_REQUEST)
         answers = request.data.getlist('question')
         print(answers)
-        employee = get_object_or_404(Employee, id=employee_id)
         serializer = EmployeeCodeSerializer(employee)
         code = serializer.data['code']
         questions = getPanasQuestions()
@@ -173,8 +187,10 @@ class PANASQuestionnaire(APIView):
 class DERSQuestionnaire(APIView):
     def post(self, request):
         employee_id = request.data.get('employee', None)
-        answers = request.data.getlist('question')
         employee = get_object_or_404(Employee, id=employee_id)
+        if employee.step != 4:
+            return Response(data='Invalid step', status=status.HTTP_400_BAD_REQUEST)
+        answers = request.data.getlist('question')
         serializer = EmployeeCodeSerializer(employee)
         code = serializer.data['code']
         questions = getDERSQuestions()
