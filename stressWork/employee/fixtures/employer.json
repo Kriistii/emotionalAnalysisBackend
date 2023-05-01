@@ -1,0 +1,21 @@
+[
+  {
+    "model": "employee.AppUsers",
+    "pk" : 1,
+    "fields": {
+      "email": "prof@email.com",
+      "password": "{{ '1234' | make_password }}"
+    }
+  },
+  {
+   "model" : "employee.Employer",
+        "pk" : 1,
+        "fields" : {
+            "name" : "ProfName",
+            "surname" : "ProfSurname",
+            "birthday" : "1999-01-01",
+            "company_id" : 1,
+            "user_id" : 1
+        }
+  }
+]
