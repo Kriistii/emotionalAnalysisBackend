@@ -440,7 +440,7 @@ class GetInteractionSummary(APIView):
         result = Session.objects\
                 .filter(employee__company=company_id)\
                 .values('employee__id', 'employee__username', 'employee__stressed')\
-                .annotate(lastDate=Max('date'), sessions=Count('id'))\
+                .annotate(lastDate=Max('date'), sessions=Count('id', distinct=True))\
                 .order_by('employee__id')
 
         return Response(result)

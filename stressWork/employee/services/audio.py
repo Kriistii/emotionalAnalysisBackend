@@ -23,12 +23,20 @@ import environ
 env = environ.Env()
 
 def speech_to_text(session_id, identifier):
-    audio_path = default_storage.path("tmp/{}/audios/{}.wav".format(session_id, identifier))
-    recognizer = sr.Recognizer()
-    with sr.AudioFile(audio_path) as source:
-        audio_data = recognizer.record(source)
+    try:
+        audio_path = default_storage.path("tmp/{}/audios/{}.wav".format(session_id, identifier))
+        recognizer = sr.Recognizer()
+        with sr.AudioFile(audio_path) as source:
+            audio_data = recognizer.record(source)
         text = recognizer.recognize_google(audio_data)
         return text.lower()
+
+    except sr.UnknownValueError:
+        return 0
+
+
+
+
 
 
 def video_to_audio(session_id, identifier):
