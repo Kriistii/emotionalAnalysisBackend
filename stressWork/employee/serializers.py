@@ -93,7 +93,7 @@ class SessionSerializerWithRequest(serializers.ModelSerializer):
 class ResultsSerializerWithSession(serializers.ModelSerializer):
     class Meta:
         model = SessionResults
-        fields = ['text', 'audio', 'video', 'happiness', 'sadness', 'anger', 'fear', 'surprise']
+        fields = ['text', 'audio', 'video', 'happiness', 'sadness', 'anger', 'fear', 'surprise', 'neutrality']
 
 class QuestionnaireSerializer(serializers.ModelSerializer):
     class Meta:
