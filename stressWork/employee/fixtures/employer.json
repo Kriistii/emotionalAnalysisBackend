@@ -1,0 +1,22 @@
+[
+  {
+    "model": "employee.AppUsers",
+    "pk" : 1,
+    "fields": {
+      "email": "prof@email.com",
+      "password": "pbkdf2_sha256$390000$Or8xKvLMBFikzaUdSqdCNo$tVkuf2k7Lfk2dMGxN4CN+rQKz8fXOzrPvCfmaqO4Sbw=",
+      "is_active" : true
+    }
+  },
+  {
+   "model" : "employee.Employer",
+        "pk" : 1,
+        "fields" : {
+            "name" : "ProfName",
+            "surname" : "ProfSurname",
+            "birthday" : "1999-01-01",
+            "company_id" : 1,
+            "user_id" : 1
+        }
+  }
+]

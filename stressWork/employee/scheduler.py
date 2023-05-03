@@ -29,11 +29,11 @@ def save_results(session, text_results, audio_results, video_results):
     result_audio = SessionResults(session=Session(pk=session.id), audio=True,
                                  happiness=audio_results['hp'],  sadness=audio_results['sd'],
                                  anger=audio_results['an'], fear=audio_results['fr'],
-                                 surprise=audio_results['sr'],neurality=audio_results['nt'])
+                                 surprise=audio_results['sr'],neutrality=audio_results['nt'])
     result_video = SessionResults(session=Session(pk=session.id), video=True,
                                  happiness=video_results['hp'],  sadness=video_results['sd'],
                                  anger=video_results['an'], fear=video_results['fr'],
-                                 surprise=video_results['sr'], neutrality=['nt'])
+                                 surprise=video_results['sr'], neutrality=video_results['nt'])
     result_text.save()
     result_audio.save()
     result_video.save()
@@ -49,9 +49,17 @@ def run_analysis():
         audio_weight = 0.333
         video_weight = 0.333
 
+        print('running text')
         text_analysis_results = text_service.analyzeText(session_serialized['text'])
+        print(text_analysis_results)
+
+        print('running audio')
         audio_analysis_results = audio.analyze_audio(session_serialized['full_audio_path'])
+        print(audio_analysis_results)
+
+        print('running video')
         video_analysis_results = video.analyze_video(session_serialized['id'], session_serialized['full_video_path'])
+        print(video_analysis_results)
         save_results(s, text_analysis_results, audio_analysis_results, video_analysis_results)
         sum_emotions = {}
         emotions = ['sd', 'an', 'fr', 'hp', 'sr', 'nt']
@@ -130,7 +138,7 @@ def stressAnalysis(employee_id):
 
 def startScheduler():
     # run this job every 24 hours
-    scheduler.add_job(run_analysis, 'interval', days=25, name='run_analysis', jobstore='default')
+    scheduler.add_job(run_analysis, 'interval', days=30, name='run_analysis', jobstore='default')
    # scheduler.add_job(save_data, 'interval', hours=24, name='save_data', jobstore='default')
     scheduler.start()
     print("Scheduler started...", file=sys.stdout)

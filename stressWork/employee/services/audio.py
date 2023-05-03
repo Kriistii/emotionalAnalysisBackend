@@ -20,15 +20,24 @@ from ..utilityFunctions import safe_open
 from moviepy.editor import *
 import environ
 
+
 env = environ.Env()
 
 def speech_to_text(session_id, identifier):
-    audio_path = default_storage.path("tmp/{}/audios/{}.wav".format(session_id, identifier))
-    recognizer = sr.Recognizer()
-    with sr.AudioFile(audio_path) as source:
-        audio_data = recognizer.record(source)
+    try:
+        audio_path = default_storage.path("tmp/{}/audios/{}.wav".format(session_id, identifier))
+        recognizer = sr.Recognizer()
+        with sr.AudioFile(audio_path) as source:
+            audio_data = recognizer.record(source)
         text = recognizer.recognize_google(audio_data)
         return text.lower()
+
+    except sr.UnknownValueError:
+        return 0
+
+
+
+
 
 
 def video_to_audio(session_id, identifier):
@@ -49,7 +58,12 @@ def save_audio(session_id, audio_file, name):
 
 
 def analyze_audio(audio_path):
-    full_audio_path= default_storage.path(audio_path)
+    full_audio_path = default_storage.path(audio_path)
+    file = AudioFileClip(full_audio_path)
+    pathArray = audio_path.split('.')
+    new_path = pathArray[0]+'-1.'+pathArray[1]
+    print(new_path)
+    file.write_audiofile(new_path, codec='pcm_s16le', ffmpeg_params=["-ac", "1", "-ar", "44100"])
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model_name_or_path = env('MODEL_PATH')
@@ -64,6 +78,7 @@ def analyze_audio(audio_path):
         speech_array, _sampling_rate = torchaudio.load(path)
         resampler = torchaudio.transforms.Resample(_sampling_rate)
         speech = resampler(speech_array).squeeze().numpy()
+        print('speech')
         return speech
 
     def predict(path, sampling_rate):
@@ -72,6 +87,7 @@ def analyze_audio(audio_path):
         input_values = features.input_values.to(device)
         attention_mask = features.attention_mask.to(device)
         with torch.no_grad():
+            print('a')
             logits = model(input_values, attention_mask=attention_mask).logits
         scores = F.softmax(logits, dim=1).detach().cpu().numpy()[0]
         outputs = [{"Emotion": config.id2label[i], "Score": f"{round(score * 100, 3):.1f}"} for i, score in
@@ -84,11 +100,12 @@ def analyze_audio(audio_path):
         r = r.astype({'Score': 'float'})
         r.sort_values(['Score'], ascending=False, inplace=True)
         dict_emotions = dict(zip(r['Emotion'], r['Score']))
+        print(dict_emotions)
         filtered_emotion_dict = {'sd': dict_emotions['sd'], 'an': dict_emotions['an'], 'fr': dict_emotions['fr'], 'hp': dict_emotions['hp'],
                       'sr': dict_emotions['sr'], 'nt':dict_emotions['nt']}
         return filtered_emotion_dict
 
-    result = prediction(full_audio_path)
+    result = prediction(new_path)
     return result
 
 

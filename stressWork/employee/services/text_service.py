@@ -20,8 +20,8 @@ def analyzeText(text):
     r = pd.DataFrame.from_dict(te.get_emotion(text), orient='index')
     r.sort_values(r.columns[0], ascending=False, inplace=True)
     dictionary = r[0].to_dict()
-    emotions_score = {'sd': dictionary['Sad'], 'an': dictionary['Angry'], 'fr': dictionary['Fear'], 'hp': dictionary['Happy'],
-                      'sr': dictionary['Surprise']}
+    emotions_score = {'sd': dictionary['Sad']*100, 'an': dictionary['Angry']*100, 'fr': dictionary['Fear']*100, 'hp': dictionary['Happy']*100,
+                      'sr': dictionary['Surprise']*100, 'nt' : 0}
 
     return emotions_score
 
