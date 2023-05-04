@@ -146,13 +146,13 @@ class Questionnaire(models.Model):
     class Meta:
         db_table = 'questionnaire'
 
-    happiness = models.IntegerField(null=True)
-    sadness = models.IntegerField(null=True)
-    surprise = models.IntegerField(null=True)
-    anger = models.IntegerField(null=True)
-    fear = models.IntegerField(null=True)
-    neutrality = models.IntegerField(null=True)
-    new_emotion_score = models.IntegerField(null=True)
+    happiness = models.FloatField(null=True)
+    sadness = models.FloatField(null=True)
+    surprise = models.FloatField(null=True)
+    anger = models.FloatField(null=True)
+    fear = models.FloatField(null=True)
+    neutrality = models.FloatField(null=True)
+    new_emotion_score = models.FloatField(null=True)
     new_emotion = models.CharField(null=True, max_length=20)
     request = models.ForeignKey("Request", on_delete=models.CASCADE)
     employee = models.ForeignKey("Employee", on_delete=models.CASCADE)
@@ -164,9 +164,9 @@ class Vas(models.Model):
     class Meta:
         db_table = 'vas'
 
-    first_question = models.IntegerField(null=True)
-    second_question = models.IntegerField(null=True)
-    third_question = models.IntegerField(null=True)
+    first_question = models.FloatField(null=True)
+    second_question = models.FloatField(null=True)
+    third_question = models.FloatField(null=True)
     request = models.ForeignKey("Request", on_delete=models.CASCADE)
     employee = models.ForeignKey("Employee", on_delete=models.CASCADE)
     objects = models.Manager()
