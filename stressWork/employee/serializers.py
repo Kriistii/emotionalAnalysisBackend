@@ -10,7 +10,8 @@ class EmployeeSerializer(serializers.ModelSerializer):
 class EmployeeDataSerializer(serializers.ModelSerializer):
     class Meta:
         model = Employee
-        fields = ['id', 'name', 'surname', 'age', 'stressed', 'company', 'user', 'step', 'session_no', 'username']
+        fields = ['id', 'name', 'surname', 'age', 'stressed', 'company', 'user', 'step', 'session_no', 'username',
+                  'last_request', 'last_request_step']
 
 
 class EmployeeGeneralSerializer(serializers.ModelSerializer):

@@ -50,6 +50,8 @@ class Employee(models.Model):
     user = models.ForeignKey("AppUsers", on_delete=models.CASCADE)
     step = models.IntegerField(null=True)
     session_no = models.IntegerField(null=True)
+    last_request = models.IntegerField(null=True)
+    last_request_step = models.IntegerField(null=True)
 
     objects = models.Manager()
 

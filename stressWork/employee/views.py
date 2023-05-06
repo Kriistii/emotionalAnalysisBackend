@@ -615,21 +615,24 @@ class NewSession(APIView):
         employee_id = request.data.get('employee_id', None)
         employee = get_object_or_404(Employee, id=employee_id)
         response = Response("Error")
-        if request.FILES.get('video-blob', None):
-            newSession = session.createSession(employee_id, request_id)
-            session_id = newSession.id
-            video_file = request.FILES['video-blob']
-            video_path = video.save_video(session_id, video_file, name)
-            audio_path = audio.video_to_audio(session_id, name)
-            text = audio.speech_to_text(session_id, name)
-            newSession.full_video_path = video_path
-            newSession.full_audio_path = audio_path
-            newSession.text = text
-            newSession.save()
-            employee.step = employee.step + 1
-            employee.session_no = employee.session_no + 1
-            employee.save()
-            return Response("Success")
+        if employee.last_request_step == 3 or employee.last_request_step is None:
+            if request.FILES.get('video-blob', None):
+                newSession = session.createSession(employee_id, request_id)
+                session_id = newSession.id
+                video_file = request.FILES['video-blob']
+                video_path = video.save_video(session_id, video_file, name)
+                audio_path = audio.video_to_audio(session_id, name)
+                text = audio.speech_to_text(session_id, name)
+                newSession.full_video_path = video_path
+                newSession.full_audio_path = audio_path
+                newSession.text = text
+                newSession.save()
+                employee.step = employee.step + 1
+                employee.session_no = employee.session_no + 1
+                employee.last_request = request_id
+                employee.last_request_step = 1
+                employee.save()
+                return Response("Success")
         return response
 
 class CompleteNewRequest(APIView):
@@ -676,49 +679,54 @@ class FillInQuestionnaire(APIView):
 
         employee_id = request.data.get('employee_id', None)
         employee = get_object_or_404(Employee, id=employee_id)
-        request_id = request.data.get('request_id', None)
-        request_object = get_object_or_404(Request, id=request_id)
-        happiness = request.data.get('happiness', None)
-        sadness = request.data.get('sadness', None)
-        anger = request.data.get('anger', None)
-        fear = request.data.get('fear', None)
-        surprise = 0
-        neutrality = request.data.get('neutrality', None)
-        new_emotion = request.data.get('new_emotion', None)
-        new_emotion_score = request.data.get('new_emotion_score', None)
-        questionnaire = Questionnaire(employee=Employee(pk=employee_id), request=Request(pk=request_id),
-                                      happiness=happiness, sadness=sadness, anger=anger, fear=fear,
-                                      surprise=surprise,  new_emotion=new_emotion,
-                                      new_emotion_score=new_emotion_score, neutrality=neutrality)
-        questionnaire.save()
+        if employee.last_request_step == 2:
+            request_id = request.data.get('request_id', None)
+            request_object = get_object_or_404(Request, id=request_id)
+            happiness = request.data.get('happiness', None)
+            sadness = request.data.get('sadness', None)
+            anger = request.data.get('anger', None)
+            fear = request.data.get('fear', None)
+            surprise = 0
+            neutrality = request.data.get('neutrality', None)
+            new_emotion = request.data.get('new_emotion', None)
+            new_emotion_score = request.data.get('new_emotion_score', None)
+            questionnaire = Questionnaire(employee=Employee(pk=employee_id), request=Request(pk=request_id),
+                                          happiness=happiness, sadness=sadness, anger=anger, fear=fear,
+                                          surprise=surprise,  new_emotion=new_emotion,
+                                          new_emotion_score=new_emotion_score, neutrality=neutrality)
+            questionnaire.save()
 
-        # Check if file exists
-        path_dir = f'tmp/excel/{employee_id}'
-        path_excel = f'{path_dir}/vas.xlsx'
-        try:
-            if not os.path.exists(path_dir):
-                os.makedirs(path_dir)
-            wb = openpyxl.load_workbook(path_excel)
-        except FileNotFoundError:
-            # Create new workbook if file doesn't exist
-            wb = openpyxl.Workbook()
-            ws = wb.active
-            # Write header row
-            ws.append(
-                [' Username', 'Request', 'Happiness', 'Sadness', 'Anger', 'Fear', 'Surprise', 'Neutrality',
-                 'New Emotion', 'New Emotion Score'])
-        else:
-            # Open existing worksheet
-            ws = wb.active
+            employee.last_request_step = 3
+            employee.save()
+            # Check if file exists
+            path_dir = f'tmp/excel/{employee_id}'
+            path_excel = f'{path_dir}/vas.xlsx'
+            try:
+                if not os.path.exists(path_dir):
+                    os.makedirs(path_dir)
+                wb = openpyxl.load_workbook(path_excel)
+            except FileNotFoundError:
+                # Create new workbook if file doesn't exist
+                wb = openpyxl.Workbook()
+                ws = wb.active
+                # Write header row
+                ws.append(
+                    [' Username', 'Request', 'Happiness', 'Sadness', 'Anger', 'Fear', 'Surprise', 'Neutrality',
+                     'New Emotion', 'New Emotion Score'])
+            else:
+                # Open existing worksheet
+                ws = wb.active
 
-        # Write data row
-        ws.append([employee.username, request_object.emotion, happiness, sadness, anger, fear, surprise, neutrality,
-                   new_emotion, new_emotion_score])#
+            # Write data row
+            ws.append([employee.username, request_object.emotion, happiness, sadness, anger, fear, surprise, neutrality,
+                       new_emotion, new_emotion_score])#
 
-        # Save the workbook
-        wb.save(path_excel)
+            # Save the workbook
+            wb.save(path_excel)
 
-        return Response('Ok')
+            return Response('Ok')
+        return Response(status=status.HTTP_400_BAD_REQUEST)
+
 
 class retrieveQuestionnaireDataView(APIView):
     def get(self, request):
@@ -753,35 +761,41 @@ class VasQuestionnaireView(APIView):
         first = request.data.get('first', None)
         second = request.data.get('second', None)
         third = request.data.get('third', None)
-        vas = Vas(employee=Employee(pk=employee_id), request=Request(pk=request_id),
-                          first_question=first, second_question=second, third_question=third)
-        vas.save()
+        if employee.last_request_step == 1 :
+            vas = Vas(employee=Employee(pk=employee_id), request=Request(pk=request_id),
+                              first_question=first, second_question=second, third_question=third)
+            vas.save()
 
-        path_dir = f'tmp/excel/{employee_id}'
-        path_excel = f'{path_dir}/firstvas.xlsx'
-        try:
-            if not os.path.exists(path_dir):
-                os.makedirs(path_dir)
-            wb = openpyxl.load_workbook(path_excel)
-        except FileNotFoundError:
-            # Create new workbook if file doesn't exist
-            wb = openpyxl.Workbook()
-            ws = wb.active
-            # Write header row
+            employee.last_request_step = 2
+            employee.save()
+
+            path_dir = f'tmp/excel/{employee_id}'
+            path_excel = f'{path_dir}/firstvas.xlsx'
+            try:
+                if not os.path.exists(path_dir):
+                    os.makedirs(path_dir)
+                wb = openpyxl.load_workbook(path_excel)
+            except FileNotFoundError:
+                # Create new workbook if file doesn't exist
+                wb = openpyxl.Workbook()
+                ws = wb.active
+                # Write header row
+                ws.append(
+                    [' Username', 'Request', 'Valence', 'Dominance', 'Control'])
+            else:
+                # Open existing worksheet
+                ws = wb.active
+
+            # Write data row
             ws.append(
-                [' Username', 'Request', 'Valence', 'Dominance', 'Control'])
-        else:
-            # Open existing worksheet
-            ws = wb.active
+                [employee.username, request_o.emotion, first, second, third])
 
-        # Write data row
-        ws.append(
-            [employee.username, request_o.emotion, first, second, third])
+            # Save the workbook
+            wb.save(path_excel)
 
-        # Save the workbook
-        wb.save(path_excel)
+            return Response('Ok')
 
-        return Response('Ok')
+        return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
 
