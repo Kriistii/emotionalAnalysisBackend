@@ -281,6 +281,10 @@ class downloadTas(APIView):
 class downloadPanas(APIView):
     def get(self,request):
         return download_excel('panas')
+
+class downloadPanas2(APIView):
+    def get(self,request):
+        return download_excel('panas2')
 class downloadDers(APIView):
     def get(self,request):
         return download_excel('ders')
@@ -379,7 +383,7 @@ class PANASQuestionnaire(APIView):
     def post(self, request):
         employee_id = request.data.get('employee', None)
         employee = get_object_or_404(Employee, id=employee_id)
-        if employee.step != 9:
+        if employee.step != 5:
             return Response(data='Invalid step', status=status.HTTP_400_BAD_REQUEST)
         answers = request.data.getlist('question')
         print(answers)
@@ -387,6 +391,21 @@ class PANASQuestionnaire(APIView):
         code = serializer.data['code']
         questions = getPanasQuestions()
         createOrUpdateExcelFile(answers, 'panas', questions, code)
+        employee.step = 6
+        employee.save()
+        return Response(status=status.HTTP_200_OK)
+class PANAS2Questionnaire(APIView):
+    def post(self, request):
+        employee_id = request.data.get('employee', None)
+        employee = get_object_or_404(Employee, id=employee_id)
+        if employee.step != 9:
+            return Response(data='Invalid step', status=status.HTTP_400_BAD_REQUEST)
+        answers = request.data.getlist('question')
+        print(answers)
+        serializer = EmployeeCodeSerializer(employee)
+        code = serializer.data['code']
+        questions = getPanasQuestions()
+        createOrUpdateExcelFile(answers, 'panas2', questions, code)
         employee.step = 10
         employee.save()
         return Response(status=status.HTTP_200_OK)
@@ -619,7 +638,7 @@ class CompleteNewRequest(APIView):
     def post(self, request):
         employee_id = request.data.get('employee_id', None)
         employee = get_object_or_404(Employee, id=employee_id)
-        if(employee.step != 5):
+        if(employee.step != 6):
             #pick random emotion
             notCompletedRequests = Request.objects.exclude(id__in=
                                    Session.objects.filter(employee_id=employee_id).values_list('request_id', flat=True))
@@ -663,14 +682,14 @@ class FillInQuestionnaire(APIView):
         sadness = request.data.get('sadness', None)
         anger = request.data.get('anger', None)
         fear = request.data.get('fear', None)
-        surprise = request.data.get('surprise', None)
-        #neutrality = request.data.get('neutrality', None)
+        surprise = 0
+        neutrality = request.data.get('neutrality', None)
         new_emotion = request.data.get('new_emotion', None)
         new_emotion_score = request.data.get('new_emotion_score', None)
         questionnaire = Questionnaire(employee=Employee(pk=employee_id), request=Request(pk=request_id),
                                       happiness=happiness, sadness=sadness, anger=anger, fear=fear,
                                       surprise=surprise,  new_emotion=new_emotion,
-                                      new_emotion_score=new_emotion_score)#neutrality=neutrality,
+                                      new_emotion_score=new_emotion_score, neutrality=neutrality)
         questionnaire.save()
 
         # Check if file exists
@@ -686,15 +705,15 @@ class FillInQuestionnaire(APIView):
             ws = wb.active
             # Write header row
             ws.append(
-                [' Username', 'Request', 'Happiness', 'Sadness', 'Anger', 'Fear', 'Surprise',
-                 'New Emotion', 'New Emotion Score'])#'Neutrality',
+                [' Username', 'Request', 'Happiness', 'Sadness', 'Anger', 'Fear', 'Surprise', 'Neutrality',
+                 'New Emotion', 'New Emotion Score'])
         else:
             # Open existing worksheet
             ws = wb.active
 
         # Write data row
-        ws.append([employee.username, request_object.emotion, happiness, sadness, anger, fear, surprise,
-                   new_emotion, new_emotion_score])#neutrality,
+        ws.append([employee.username, request_object.emotion, happiness, sadness, anger, fear, surprise, neutrality,
+                   new_emotion, new_emotion_score])#
 
         # Save the workbook
         wb.save(path_excel)
@@ -750,7 +769,7 @@ class VasQuestionnaireView(APIView):
             ws = wb.active
             # Write header row
             ws.append(
-                [' Username', 'Request', 'First Question', 'Second Question', 'Third Question'])
+                [' Username', 'Request', 'Valence', 'Dominance', 'Control'])
         else:
             # Open existing worksheet
             ws = wb.active

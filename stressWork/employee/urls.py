@@ -33,6 +33,7 @@ bdi = BDIQuestionnaire.as_view()
 bai = BAIQuestionnaire.as_view()
 ders = DERSQuestionnaire.as_view()
 panas = PANASQuestionnaire.as_view()
+panas2 = PANAS2Questionnaire.as_view()
 vas = VasQuestionnaireView.as_view()
 vasDownload = downloadVas.as_view()
 firstvasDownload = downloadFirstVas.as_view()
@@ -41,6 +42,7 @@ bdiDownload = downloadBdi.as_view()
 baiDownload = downloadBai.as_view()
 dersDownload = downloadDers.as_view()
 panasDownload = downloadPanas.as_view()
+panas2Download = downloadPanas2.as_view()
 retrieveQuestionnaireData = retrieveQuestionnaireDataView.as_view()
 
 
@@ -75,9 +77,11 @@ urlpatterns = [
     path("bai", bai, name="bai"),
     path("ders", ders, name="ders"),
     path("panas", panas, name="panas"),
+    path("secondPanas", panas2, name="panas2"),
     path("tasDownload", tasDownload, name="tasDownload"),
     path("bdiDownload", bdiDownload, name="bdiDownload"),
     path("baiDownload", baiDownload, name="baiDownload"),
+    path("secondPanasDownload", panas2Download, name="panasDownload2"),
     path("panasDownload", panasDownload, name="panasDownload"),
     path("vasDownload", vasDownload, name="vasDownload"),
     path("firstvasDownload", firstvasDownload, name="firstvasDownload"),
