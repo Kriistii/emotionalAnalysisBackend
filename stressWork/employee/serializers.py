@@ -10,7 +10,8 @@ class EmployeeSerializer(serializers.ModelSerializer):
 class EmployeeDataSerializer(serializers.ModelSerializer):
     class Meta:
         model = Employee
-        fields = ['id', 'name', 'surname', 'age', 'stressed', 'company', 'user', 'step', 'session_no', 'username']
+        fields = ['id', 'name', 'surname', 'age', 'stressed', 'company', 'user', 'step', 'session_no', 'username',
+                  'last_request', 'last_request_step']
 
 
 class EmployeeGeneralSerializer(serializers.ModelSerializer):
@@ -65,7 +66,17 @@ class EmotionsSerializer(serializers.ModelSerializer):
         model = Emotion
         fields = ['id', 'emotion_name', 'extended_name']
 
+
+class RequestOnlyTextSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Request
+        fields = ['id', 'text']
+class RequestOnlyEmotionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Request
+        fields = ['id', 'emotion']
 class SessionSerializer(serializers.ModelSerializer):
+    request = RequestOnlyEmotionSerializer()
     class Meta:
         model = Session
         fields = ['id', 'employee', 'date', 'request', 'analyzed', 'text', 'full_audio_path', 'full_video_path',
@@ -80,10 +91,7 @@ class RequestSerializer(serializers.ModelSerializer):
     class Meta:
         model = Request
         fields = ['id', 'text', 'created_at', 'created_by']
-class RequestOnlyTextSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Request
-        fields = ['id', 'text']
+
 
 class SessionSerializerWithRequest(serializers.ModelSerializer):
     request = RequestOnlyTextSerializer()

@@ -29,7 +29,7 @@ def speech_to_text(session_id, identifier):
         recognizer = sr.Recognizer()
         with sr.AudioFile(audio_path) as source:
             audio_data = recognizer.record(source)
-        text = recognizer.recognize_google(audio_data)
+        text = recognizer.recognize_google(audio_data, language="it-IT")
         return text.lower()
 
     except sr.UnknownValueError:
