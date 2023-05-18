@@ -7,6 +7,7 @@ import nltk
 nltk.download('omw-1.4')
 
 from datetime import datetime
+from googletrans import Translator
 
 
 
@@ -17,6 +18,8 @@ def safe_open_w(path):
 
 
 def analyzeText(text):
+    translator = Translator()
+    text = translator.translate(text, src='it', dest='en')
     r = pd.DataFrame.from_dict(te.get_emotion(text), orient='index')
     r.sort_values(r.columns[0], ascending=False, inplace=True)
     dictionary = r[0].to_dict()
