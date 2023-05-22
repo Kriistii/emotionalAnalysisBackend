@@ -20,6 +20,7 @@ import os
 import openpyxl
 import random
 from django.http import HttpResponse
+import zipfile
 
 
 #---------------------------BACKOFFICE-------------------------------------
@@ -299,6 +300,29 @@ class downloadFirstVas(APIView):
     def post(self, request):
         print(request.data)
         return download_excel(f'{request.data["employee_id"]}/firstvas')
+
+class VideoDownloadView(APIView):
+    def get(self, request, session_id):
+        session = get_object_or_404(Session, id=session_id)
+
+        video_path = session.full_video_path
+
+        zip_path = f'{video_path.split(".")[0]}.zip'
+
+        # Create a zip file and add the video to it
+        with zipfile.ZipFile(zip_path, 'w') as zipf:
+            zipf.write(video_path, os.path.basename(video_path))
+
+        # Open the zip file in binary mode and read its contents
+        with open(zip_path, 'rb') as zip_file:
+            response = HttpResponse(zip_file.read(), content_type='application/zip')
+            response['Content-Disposition'] = 'attachment; filename="video.zip"'
+
+        # Remove the temporary zip file
+        os.remove(zip_path)
+
+        return response
+
 
 def download_excel(identifier):
     path_dir = 'tmp/excel'

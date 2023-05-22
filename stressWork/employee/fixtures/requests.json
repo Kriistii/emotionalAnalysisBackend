@@ -4,7 +4,7 @@
         "pk" : 1,
         "fields" : {
             "text" : "<h4>Ti chiediamo di pensare al momento in cui ti sei svegliato ieri. </h4>\n<ul>\n<li>Prova ad immergerti nel ricordo, pensando a dove ti trovi e con chi sei, se senti rumori o odori particolari e a che cosa sta succedendo in quel momento\n</li>\n<li>\nNel tuo ricordo come ti senti? Quali emozioni provi e che intensità hanno?\n</li>\n<li>\nCosa ti è passato per la mente durante l’evento che hai ricordato?\n</li>\n<li>\nDurante il ricordo quale è stata la cosa più importante per te? Cosa avresti voluto in quel momento? Come ti sei comportato?\n</li>\n</ul>    \t\nQuando sei pronto a raccontare l'episodio premi l’icona della camera. \n\n",
-            "emotion" : "Neutrality"
+            "emotion" : "Trial"
         }
     },
     {
@@ -40,8 +40,8 @@
         "model" : "employee.Request",
         "pk" : 6,
         "fields" : {
-            "text" : "<h4>Ti chiediamo di pensare ad un episodio in cui ti sei sentito sorpreso/a. </h4>\n<ul>\n<li>Prova ad immergerti nel ricordo, pensando a dove ti trovi e con chi sei, se senti rumori o odori particolari e a che cosa sta succedendo in quel momento\n</li>\n<li>\nNel tuo ricordo come ti senti? Quali emozioni provi e che intensità hanno?\n</li>\n<li>\nCosa ti è passato per la mente durante l’evento che hai ricordato?\n</li>\n<li>\nDurante il ricordo quale è stata la cosa più importante per te? Cosa avresti voluto in quel momento? Come ti sei comportato?\n</li>\n</ul>    \t\nQuando sei pronto a raccontare l'episodio premi l’icona della camera. \n",
-             "emotion" : "Surprise"
+            "text" : "<h4>Ti chiediamo di pensare ad un episodio in cui ti sei sentito calmo/rilassato(a). </h4>\n<ul>\n<li>Prova ad immergerti nel ricordo, pensando a dove ti trovi e con chi sei, se senti rumori o odori particolari e a che cosa sta succedendo in quel momento\n</li>\n<li>\nNel tuo ricordo come ti senti? Quali emozioni provi e che intensità hanno?\n</li>\n<li>\nCosa ti è passato per la mente durante l’evento che hai ricordato?\n</li>\n<li>\nDurante il ricordo quale è stata la cosa più importante per te? Cosa avresti voluto in quel momento? Come ti sei comportato?\n</li>\n</ul>    \t\nQuando sei pronto a raccontare l'episodio premi l’icona della camera. \n",
+             "emotion" : "Calm/Relaxed"
         }
     }
 ]
