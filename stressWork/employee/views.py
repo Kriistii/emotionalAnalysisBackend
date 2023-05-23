@@ -179,6 +179,7 @@ class RetrieveSessionsEmployee(APIView):
 class InteractionDetailsAPIView(APIView):
     def get(self, request, session_id):
         session = get_object_or_404(Session, id=session_id)
+        req = get_object_or_404(Request, id=session.request_id)
         results = SessionResults.objects.filter(session_id=session_id)
         results = ResultsSerializerWithSession(results, many=True)
         results = results.data[:]
@@ -223,7 +224,7 @@ class InteractionDetailsAPIView(APIView):
 
         return Response(data={"analysis": serializer, "empl_info": serializerEmployee, "csv_results" : csv_results,
                               'text' : response['text_results'], 'audio' : response['audio_results'],
-                              'video' : response['video_results'], 'request_id' : session.request_id}, status=status.HTTP_200_OK)
+                              'video' : response['video_results'], 'request_id' : session.request_id, 'request': req.emotion}, status=status.HTTP_200_OK)
 
 #create
 class CreateEmployeeAPIView(APIView):
