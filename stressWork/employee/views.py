@@ -350,6 +350,7 @@ def download_excel(identifier):
 #---------------------------APPLICATION-------------------------------------
 #forms
 class RegistrationForm(APIView):
+    permission_classes = (IsAuthenticated,)
     def post(self, request):
         employee = get_object_or_404(Employee, id=request.data['employee'])
         if employee.step != 0:
@@ -372,6 +373,7 @@ class RegistrationForm(APIView):
 
         return Response(data=serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 class TasQuestionnaire(APIView):
+    permission_classes = (IsAuthenticated,)
     def post(self, request):
         employee_id = request.data.get('employee', None)
         employee = get_object_or_404(Employee, id=employee_id)
@@ -387,6 +389,7 @@ class TasQuestionnaire(APIView):
         employee.save()
         return Response(status=status.HTTP_200_OK)
 class BDIQuestionnaire(APIView):
+    permission_classes = (IsAuthenticated,)
     def post(self, request):
         employee_id = request.data.get('employee', None)
         employee = get_object_or_404(Employee, id=employee_id)
@@ -402,6 +405,7 @@ class BDIQuestionnaire(APIView):
         employee.save()
         return Response(status=status.HTTP_200_OK)
 class BAIQuestionnaire(APIView):
+    permission_classes = (IsAuthenticated,)
     def post(self, request):
         employee_id = request.data.get('employee', None)
         employee = get_object_or_404(Employee, id=employee_id)
@@ -417,6 +421,7 @@ class BAIQuestionnaire(APIView):
         employee.save()
         return Response(status=status.HTTP_200_OK)
 class PANASQuestionnaire(APIView):
+    permission_classes = (IsAuthenticated,)
     def post(self, request):
         employee_id = request.data.get('employee', None)
         employee = get_object_or_404(Employee, id=employee_id)
@@ -432,6 +437,7 @@ class PANASQuestionnaire(APIView):
         employee.save()
         return Response(status=status.HTTP_200_OK)
 class PANAS2Questionnaire(APIView):
+    permission_classes = (IsAuthenticated,)
     def post(self, request):
         employee_id = request.data.get('employee', None)
         employee = get_object_or_404(Employee, id=employee_id)
@@ -447,6 +453,7 @@ class PANAS2Questionnaire(APIView):
         employee.save()
         return Response(status=status.HTTP_200_OK)
 class DERSQuestionnaire(APIView):
+    permission_classes = (IsAuthenticated,)
     def post(self, request):
         employee_id = request.data.get('employee', None)
         employee = get_object_or_404(Employee, id=employee_id)
@@ -862,6 +869,7 @@ class CreateEmployerAPIView(APIView):
         return Response("Ok")
 
 class TestVideoAnalysisAPIView(APIView):
+    permission_classes = (IsAuthenticated,)
     # todo request filter
     def get(self, request):
         name = 1
@@ -869,6 +877,7 @@ class TestVideoAnalysisAPIView(APIView):
         return Response("Ok")
 
 class GetStep(APIView):
+    permission_classes = (IsAuthenticated,)
     def post(self, request):
         employee = get_object_or_404(Employee, id=request['employee_id'])
         serializer = EmployeeStepSerializer(employee)
