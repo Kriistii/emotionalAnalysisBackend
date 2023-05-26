@@ -21,7 +21,19 @@ import openpyxl
 import random
 from django.http import HttpResponse
 import zipfile
+from .services import text_service
 
+class TextTestView(APIView):
+    #   permission_classes = (IsAuthenticated,)
+    def get(self, request, session_id):
+
+        session = get_object_or_404(Session, id=session_id)
+        text_analysis_results = text_service.analyzeTextIt(session.text)
+        print(text_analysis_results)
+
+        return Response({
+            "result": text_analysis_results
+        })
 
 #---------------------------BACKOFFICE-------------------------------------
 class EmployeeStatsAPIView(APIView):
