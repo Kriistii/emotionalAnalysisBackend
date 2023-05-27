@@ -21,7 +21,19 @@ import openpyxl
 import random
 from django.http import HttpResponse
 import zipfile
+from .services import text_service
 
+class TextTestView(APIView):
+    #   permission_classes = (IsAuthenticated,)
+    def get(self, request, session_id):
+
+        session = get_object_or_404(Session, id=session_id)
+        text_analysis_results = text_service.analyzeTextIt(session.text)
+        print(text_analysis_results)
+
+        return Response({
+            "result": text_analysis_results
+        })
 
 #---------------------------BACKOFFICE-------------------------------------
 class EmployeeStatsAPIView(APIView):
@@ -338,6 +350,7 @@ def download_excel(identifier):
 #---------------------------APPLICATION-------------------------------------
 #forms
 class RegistrationForm(APIView):
+    permission_classes = (IsAuthenticated,)
     def post(self, request):
         employee = get_object_or_404(Employee, id=request.data['employee'])
         if employee.step != 0:
@@ -360,6 +373,7 @@ class RegistrationForm(APIView):
 
         return Response(data=serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 class TasQuestionnaire(APIView):
+    permission_classes = (IsAuthenticated,)
     def post(self, request):
         employee_id = request.data.get('employee', None)
         employee = get_object_or_404(Employee, id=employee_id)
@@ -375,6 +389,7 @@ class TasQuestionnaire(APIView):
         employee.save()
         return Response(status=status.HTTP_200_OK)
 class BDIQuestionnaire(APIView):
+    permission_classes = (IsAuthenticated,)
     def post(self, request):
         employee_id = request.data.get('employee', None)
         employee = get_object_or_404(Employee, id=employee_id)
@@ -390,6 +405,7 @@ class BDIQuestionnaire(APIView):
         employee.save()
         return Response(status=status.HTTP_200_OK)
 class BAIQuestionnaire(APIView):
+    permission_classes = (IsAuthenticated,)
     def post(self, request):
         employee_id = request.data.get('employee', None)
         employee = get_object_or_404(Employee, id=employee_id)
@@ -405,6 +421,7 @@ class BAIQuestionnaire(APIView):
         employee.save()
         return Response(status=status.HTTP_200_OK)
 class PANASQuestionnaire(APIView):
+    permission_classes = (IsAuthenticated,)
     def post(self, request):
         employee_id = request.data.get('employee', None)
         employee = get_object_or_404(Employee, id=employee_id)
@@ -420,6 +437,7 @@ class PANASQuestionnaire(APIView):
         employee.save()
         return Response(status=status.HTTP_200_OK)
 class PANAS2Questionnaire(APIView):
+    permission_classes = (IsAuthenticated,)
     def post(self, request):
         employee_id = request.data.get('employee', None)
         employee = get_object_or_404(Employee, id=employee_id)
@@ -435,6 +453,7 @@ class PANAS2Questionnaire(APIView):
         employee.save()
         return Response(status=status.HTTP_200_OK)
 class DERSQuestionnaire(APIView):
+    permission_classes = (IsAuthenticated,)
     def post(self, request):
         employee_id = request.data.get('employee', None)
         employee = get_object_or_404(Employee, id=employee_id)
@@ -850,6 +869,7 @@ class CreateEmployerAPIView(APIView):
         return Response("Ok")
 
 class TestVideoAnalysisAPIView(APIView):
+    permission_classes = (IsAuthenticated,)
     # todo request filter
     def get(self, request):
         name = 1
@@ -857,6 +877,7 @@ class TestVideoAnalysisAPIView(APIView):
         return Response("Ok")
 
 class GetStep(APIView):
+    permission_classes = (IsAuthenticated,)
     def post(self, request):
         employee = get_object_or_404(Employee, id=request['employee_id'])
         serializer = EmployeeStepSerializer(employee)

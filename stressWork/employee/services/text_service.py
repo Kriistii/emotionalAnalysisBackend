@@ -7,6 +7,7 @@ import os
 
 from datetime import datetime
 from mtranslate import translate
+from feel_it import EmotionClassifier
 
 
 
@@ -26,6 +27,12 @@ def analyzeText(text):
 
     return emotions_score
 
+def analyzeTextIt(text):
+    emotion_classifier = EmotionClassifier()
+    print(text)
+    emotions = emotion_classifier.predict([text])
+    print(emotions)
+    return emotions
 '''
 def mergeAndAnalyzeText(text):
     session_messages = ChatSessionMessage.objects.filter(session=ChatSession(pk=chat_session_id)).order_by("date")

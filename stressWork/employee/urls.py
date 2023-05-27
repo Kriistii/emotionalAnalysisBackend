@@ -45,6 +45,7 @@ panasDownload = downloadPanas.as_view()
 panas2Download = downloadPanas2.as_view()
 retrieveQuestionnaireData = retrieveQuestionnaireDataView.as_view()
 downloadVideo = VideoDownloadView.as_view()
+test = TextTestView.as_view()
 
 
 urlpatterns = [
@@ -55,6 +56,7 @@ urlpatterns = [
     path("testVideoAnalysis", test_video_analysis, name="test-video-analysis"),
     path("getAnalysis/<uuid:session_id>", interaction_details, name="interaction_details"),
     path("downloadvideo/<uuid:session_id>", downloadVideo, name="downloadvideo"),
+    path("test/<uuid:session_id>", test, name="test"),
     path("createEmployee", employee_create, name="employee-create"),
     path("createEmployer", employer_create, name="employer-create"),
     path("retrieveChatLogsEmployee", retrieve_chat_logs_employee, name="retrieve_chat_logs_employee"),

@@ -21,7 +21,7 @@ def save_data():
         stressRecord = StressRecord(stressedUsers=entry['stressedEmployees'], company_id=entry['company_id'])
         stressRecord.save()
 
-def save_results(session, text_results, audio_results, video_results):
+def save_results(session, text_results, text_results2, audio_results, video_results):
     result_text = SessionResults(session=Session(pk=session.id), text=True,
                                  happiness=text_results['hp'],  sadness=text_results['sd'],
                                  anger=text_results['an'], fear=text_results['fr'],
@@ -34,6 +34,8 @@ def save_results(session, text_results, audio_results, video_results):
                                  happiness=video_results['hp'],  sadness=video_results['sd'],
                                  anger=video_results['an'], fear=video_results['fr'],
                                  surprise=video_results['sr'], neutrality=video_results['nt'])
+    session.first_prevailing_emotion = text_results2[0]
+    session.save()
     result_text.save()
     result_audio.save()
     result_video.save()
@@ -52,6 +54,9 @@ def run_analysis():
         print('running text')
         text_analysis_results = text_service.analyzeText(session_serialized['text'])
         print(text_analysis_results)
+        print('running text-it')
+        text_analysis_results2 = text_service.analyzeTextIt(session_serialized['text'])
+        print(text_analysis_results2)
 
         print('running audio')
         audio_analysis_results = audio.analyze_audio(session_serialized['full_audio_path'])
@@ -60,7 +65,7 @@ def run_analysis():
         print('running video')
         video_analysis_results = video.analyze_video(session_serialized['id'], session_serialized['full_video_path'])
         print(video_analysis_results)
-        save_results(s, text_analysis_results, audio_analysis_results, video_analysis_results)
+        save_results(s, text_analysis_results,text_analysis_results2, audio_analysis_results, video_analysis_results)
         sum_emotions = {}
         emotions = ['sd', 'an', 'fr', 'hp', 'sr', 'nt']
         for e in emotions:
