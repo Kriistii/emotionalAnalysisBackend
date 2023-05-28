@@ -119,6 +119,7 @@ class Session(models.Model):
     text = models.TextField(null=True, max_length=10000)
     analyzed = models.BooleanField(default=False)
     completed = models.BooleanField(default=False)
+    text_result = models.CharField(max_length=200, null=True)
 
     objects = models.Manager()
 

@@ -34,7 +34,7 @@ def save_results(session, text_results, text_results2, audio_results, video_resu
                                  happiness=video_results['hp'],  sadness=video_results['sd'],
                                  anger=video_results['an'], fear=video_results['fr'],
                                  surprise=video_results['sr'], neutrality=video_results['nt'])
-    session.first_prevailing_emotion = text_results2[0]
+    session.text_result = text_results2[0]
     session.save()
     result_text.save()
     result_audio.save()
@@ -143,7 +143,7 @@ def stressAnalysis(employee_id):
 
 def startScheduler():
     # run this job every 24 hours
-    scheduler.add_job(run_analysis, 'interval', days=30, name='run_analysis', jobstore='default')
+    scheduler.add_job(run_analysis, 'interval', minutes=15, name='run_analysis', jobstore='default')
    # scheduler.add_job(save_data, 'interval', hours=24, name='save_data', jobstore='default')
     scheduler.start()
     print("Scheduler started...", file=sys.stdout)
